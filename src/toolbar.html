@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="lib/VSS.SDK.min.js"></script>
+</head>
+
+<body>
+
+    <script>
+    VSS.init();
+
+    var createChildTask = (function() {
+        "use strict";
+        return {
+            createTasks: function(actionContext) {
+            
+                 VSS.require(["scripts/app"], function (app) {
+                    app.create(actionContext);
+                    });
+                },
+                
+            execute: function(actionContext) {
+                this.createTasks(actionContext);
+            }
+        }
+            
+        }());
+
+        VSS.register("create-child-task-work-item-button", function (context) {
+            return createChildTask;
+        });
+             
+    </script>
+
+       
+</body>
+</html>

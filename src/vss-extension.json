@@ -1,0 +1,83 @@
+{
+    "manifestVersion": 1.0,
+    "id": "vsts-work-item-one-click-child-links",
+    "version": "0.2.1",
+    "name": "1-Click Child-Links",
+    "description": "Add Child-Links from predefined templates with a single click..",
+    "public": false,
+    "publisher": "ruifig",
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/figueiredorui/1-click-child-links"
+    },
+    "icons": {
+        "default": "img/one-click.png"
+    },
+    "screenshots": [
+        {
+            "path": "img/screen01.png"
+        },
+        {
+            "path": "img/screen02.png"
+        },
+        {
+            "path": "img/screen03.png"
+        }
+    ],
+    "tags": [
+        "Tasks"
+    ],
+    "categories": [
+        "Plan and track"
+    ],
+    "content": {
+        "details": {
+            "path": "overview.md"
+        }
+    },
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "scopes": [
+        "vso.work",
+        "vso.work_write"
+    ],
+    "files": [
+        {
+            "path": "img",
+            "addressable": true
+        },
+        {
+            "path": "toolbar.html",
+            "addressable": true
+        },
+        {
+            "path": "scripts/app.js",
+            "addressable": true
+        },
+        {
+            "path": "lib/VSS.SDK.min.js",
+            "addressable": true
+        }
+    ],
+    "contributions": [
+        {
+            "id": "create-child-task-work-item-button",
+            "type": "ms.vss-web.action",
+            "description": "1-Click Child-Links",
+            "targets": [
+                "ms.vss-work-web.work-item-toolbar-menu"
+            ],
+            "properties": {
+                "text": " 1-Click Child-Links",
+                "title": "1-Click Child-Links",
+                "toolbarText": "1-Click Child-Links",                
+                "icon": "img/one-click16.png",
+                "uri": "toolbar.html",
+                "registeredObjectId": "create-child-task-work-item-button"
+            }
+        }
+    ]
+}
