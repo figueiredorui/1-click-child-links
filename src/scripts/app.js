@@ -1,5 +1,5 @@
 define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q", "VSS/Controls", "VSS/Controls/StatusIndicator", "VSS/Controls/Dialogs"],
-    function(_WorkItemServices, _WorkItemRestClient, Q, Controls, StatusIndicator, Dialogs) {
+    function (_WorkItemServices, _WorkItemRestClient, Q, Controls, StatusIndicator, Dialogs) {
 
         function getWorkItemFormService() {
             return _WorkItemServices.WorkItemFormService.getService();
@@ -18,7 +18,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
         function callRestApi(method) {
 
             return VSS.getAccessToken()
-                .then(function(accessToken) {
+                .then(function (accessToken) {
 
                     var url = getApiUrl(method);
                     return $.ajax({
@@ -34,20 +34,20 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
         function getTemplates(workItemTypes) {
 
             var requests = []
-            workItemTypes.forEach(function(workItemType) {
+            workItemTypes.forEach(function (workItemType) {
 
                 var request = callRestApi('/templates?workItemTypeName=' + workItemType);
                 requests.push(request);
             }, this);
 
             return Q.all(requests)
-                .then(function(templateTypes) {
+                .then(function (templateTypes) {
 
                     var templates = [];
-                    templateTypes.forEach(function(templateType) {
+                    templateTypes.forEach(function (templateType) {
                         if (templateType.count > 0) {
 
-                            templateType.value.forEach(function(element) {
+                            templateType.value.forEach(function (element) {
                                 templates.push(element)
                             }, this);
                         }
@@ -60,14 +60,26 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
             return callRestApi('/templates/' + id);
         }
 
+        function IsPropertyValid(taskTemplate, key) {
+            if (taskTemplate.fields.hasOwnProperty(key) == false) {
+                return false;
+            }
+            if (key.indexOf('System.Tags') >= 0) { //not supporting tags for now
+                return false;
+            }
+            if (taskTemplate.fields[key].toLowerCase() == '@me') { //not supporting current identity
+                return false;
+            }
+
+            return true;
+        }
+
         function createWorkItemFromTemplate(currentWorkItem, taskTemplate) {
             var workItem = [];
 
             for (var key in taskTemplate.fields) {
-                if (taskTemplate.fields.hasOwnProperty(key)) {
-                    if (key.indexOf('System.Tags') == -1) { //not supporting tags for now
-                        workItem.push({ "op": "add", "path": "/fields/" + key, "value": taskTemplate.fields[key] })
-                    }
+                if (IsPropertyValid(taskTemplate, key)) {
+                    workItem.push({ "op": "add", "path": "/fields/" + key, "value": taskTemplate.fields[key] })
                 }
             }
 
@@ -82,6 +94,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
 
             if (taskTemplate.fields['System.AssignedTo'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+            else if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me')
+                workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
 
             return workItem;
         }
@@ -91,7 +105,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate);
 
             _WorkItemRestClient.getClient().createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
-                .then(function(response) {
+                .then(function (response) {
                     //Add relation
                     service.addWorkItemRelations([
                         {
@@ -99,9 +113,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
                             url: response.url,
                         }]);
                     //Save 
-                    service.beginSaveWorkItem(function(response) {
+                    service.beginSaveWorkItem(function (response) {
                         //WriteLog(" Saved");
-                    }, function(error) {
+                    }, function (error) {
                         ShowDialog(" Error saving: " + response);
                     });
                 });
@@ -110,7 +124,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
         function AddChilds(service) {
             // Get the current values for a few of the common fields
             service.getFieldValues(["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
-                .then(function(value) {
+                .then(function (value) {
                     var currentWorkItem = value
 
                     var childTypes = GetChildTypes(currentWorkItem["System.WorkItemType"]);
@@ -118,14 +132,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
                         return;
                     // get Templates
                     getTemplates(childTypes)
-                        .then(function(response) {
+                        .then(function (response) {
                             if (response.length == 0) {
                                 ShowDialog(workItemType + ' Templates found: ' + response.count + '. Please add ' + workItemType + ' templates to the Project Team.')
                             }
                             // Create child task
-                            response.forEach(function(template) {
+                            response.forEach(function (template) {
 
-                                getTemplate(template.id).then(function(taskTemplate) {
+                                getTemplate(template.id).then(function (taskTemplate) {
                                     createWorkItem(service, currentWorkItem, taskTemplate)
                                 });
                             }, this);
@@ -168,12 +182,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
                 resizable: false,
             };
 
-            VSS.getService(VSS.ServiceIds.Dialog).then(function(dialogSvc) {
+            VSS.getService(VSS.ServiceIds.Dialog).then(function (dialogSvc) {
 
                 dialogSvc.openMessageDialog(message, dialogOptions)
-                    .then(function(dialog) {
+                    .then(function (dialog) {
                         //
-                    }, function(dialog) {
+                    }, function (dialog) {
                         //
                     });
             });
@@ -185,8 +199,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
 
         return {
 
-            create: function(context) {
-                getWorkItemFormService().then(function(service) {
+            create: function (context) {
+                getWorkItemFormService().then(function (service) {
                     WriteLog("Init");
                     AddChilds(service)
                 })
