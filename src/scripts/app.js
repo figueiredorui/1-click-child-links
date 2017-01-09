@@ -1,12 +1,14 @@
-define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q", "VSS/Controls", "VSS/Controls/StatusIndicator", "VSS/Controls/Dialogs"],
-    function (_WorkItemServices, _WorkItemRestClient, Q, Controls, StatusIndicator, Dialogs) {
+define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS/Work/RestClient", "q", "VSS/Controls", "VSS/Controls/StatusIndicator", "VSS/Controls/Dialogs"],
+    function (_WorkItemServices, _WorkItemRestClient, workRestClient, Q, Controls, StatusIndicator, Dialogs) {
+
+        var ctx = null;
 
         function getWorkItemFormService() {
             return _WorkItemServices.WorkItemFormService.getService();
         }
 
         function getApiUrl(method) {
-            var ctx = VSS.getWebContext();
+
             var collection = ctx.collection.uri;
             var project = ctx.project.name;
             var team = ctx.team.name;
@@ -70,11 +72,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
             if (taskTemplate.fields[key].toLowerCase() == '@me') { //not supporting current identity
                 return false;
             }
+            if (taskTemplate.fields[key].toLowerCase() == '@currentiteration') { //not supporting current iteration
+                return false;
+            }
 
             return true;
         }
 
-        function createWorkItemFromTemplate(currentWorkItem, taskTemplate) {
+        function createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings) {
             var workItem = [];
 
             for (var key in taskTemplate.fields) {
@@ -91,18 +96,20 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
 
             if (taskTemplate.fields['System.IterationPath'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.IterationPath", "value": currentWorkItem['System.IterationPath'] })
+            else if (taskTemplate.fields['System.IterationPath'].toLowerCase() == '@currentiteration')
+                workItem.push({ "op": "add", "path": "/fields/System.IterationPath", "value": teamSettings.backlogIteration.name + teamSettings.defaultIteration.path })
 
             if (taskTemplate.fields['System.AssignedTo'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
             else if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me')
-                workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+                workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": ctx.user.uniqueName })
 
             return workItem;
         }
 
-        function createWorkItem(service, currentWorkItem, taskTemplate) {
+        function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings) {
 
-            var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate);
+            var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
             _WorkItemRestClient.getClient().createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
                 .then(function (response) {
@@ -122,29 +129,40 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
         }
 
         function AddChilds(service) {
-            // Get the current values for a few of the common fields
-            service.getFieldValues(["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
-                .then(function (value) {
-                    var currentWorkItem = value
 
-                    var childTypes = GetChildTypes(currentWorkItem["System.WorkItemType"]);
-                    if (childTypes == null)
-                        return;
-                    // get Templates
-                    getTemplates(childTypes)
-                        .then(function (response) {
-                            if (response.length == 0) {
-                                ShowDialog(workItemType + ' Templates found: ' + response.count + '. Please add ' + workItemType + ' templates to the Project Team.')
-                            }
-                            // Create child task
-                            response.forEach(function (template) {
+            var witClient = _WorkItemRestClient.getClient();
+            var workClient = workRestClient.getClient();
 
-                                getTemplate(template.id).then(function (taskTemplate) {
-                                    createWorkItem(service, currentWorkItem, taskTemplate)
-                                });
-                            }, this);
-                        })
-                })
+            var team = {
+                projectId: ctx.project.id,
+                teamId: ctx.team.id
+            }
+
+            workClient.getTeamSettings(team).then(function (teamSettings) {
+                // Get the current values for a few of the common fields
+                service.getFieldValues(["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
+                    .then(function (value) {
+                        var currentWorkItem = value
+
+                        var childTypes = GetChildTypes(currentWorkItem["System.WorkItemType"]);
+                        if (childTypes == null)
+                            return;
+                        // get Templates
+                        getTemplates(childTypes)
+                            .then(function (response) {
+                                if (response.length == 0) {
+                                    ShowDialog(workItemType + ' Templates found: ' + response.count + '. Please add ' + workItemType + ' templates to the Project Team.')
+                                }
+                                // Create child task
+                                response.forEach(function (template) {
+
+                                    getTemplate(template.id).then(function (taskTemplate) {
+                                        createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                                    });
+                                }, this);
+                            })
+                    })
+            })
         }
 
         function GetChildTypes(workItemType) {
@@ -200,6 +218,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "q",
         return {
 
             create: function (context) {
+
+                ctx = VSS.getWebContext();
+
                 getWorkItemFormService().then(function (service) {
                     WriteLog("Init");
                     AddChilds(service)
