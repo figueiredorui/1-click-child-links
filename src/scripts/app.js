@@ -144,14 +144,15 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     .then(function (value) {
                         var currentWorkItem = value
 
-                        var childTypes = GetChildTypes(currentWorkItem["System.WorkItemType"]);
+                        var workItemType = currentWorkItem["System.WorkItemType"];
+                        var childTypes = GetChildTypes(workItemType);
                         if (childTypes == null)
                             return;
                         // get Templates
                         getTemplates(childTypes)
                             .then(function (response) {
                                 if (response.length == 0) {
-                                    ShowDialog(workItemType + ' Templates found: ' + response.count + '. Please add ' + workItemType + ' templates to the Project Team.')
+                                    ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
                                 }
                                 // Create child task
                                 response.forEach(function (template) {
