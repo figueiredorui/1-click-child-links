@@ -162,7 +162,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                     chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
                                 });
                                 return chain;
-                                
+
                             })
                     })
             })
@@ -172,9 +172,28 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return function () {
                 return getTemplate(template.id).then(function (taskTemplate) {
                     // Create child 
-                    createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                    if (IsValidTemplate(currentWorkItem, taskTemplate)) {
+                        createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                    }
                 });;
             };
+        }
+
+        function IsValidTemplate(currentWorkItem, taskTemplate) {
+
+            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g)
+            if (filters) {
+                var isValid = false;
+                for (var i = 0; i < filters.length; i++) {
+                    isValid = filters[i].split(',').includes(currentWorkItem["System.WorkItemType"]);
+                    if (isValid)
+                        break;
+                }
+                return isValid;
+            } else {
+                return true;
+            }
+
         }
 
         function GetChildTypes(workItemType) {
