@@ -153,17 +153,28 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             .then(function (response) {
                                 if (response.length == 0) {
                                     ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                    return;
                                 }
-                                // Create child task
-                                response.forEach(function (template) {
-
-                                    getTemplate(template.id).then(function (taskTemplate) {
-                                        createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
-                                    });
-                                }, this);
+                                // created childs alphabetical 
+                                var templates = response.sort(SortTemplates);
+                                var chain = Q.when();
+                                templates.forEach(function (template) {
+                                    chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
+                                });
+                                return chain;
+                                
                             })
                     })
             })
+        }
+
+        function createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings) {
+            return function () {
+                return getTemplate(template.id).then(function (taskTemplate) {
+                    // Create child 
+                    createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                });;
+            };
         }
 
         function GetChildTypes(workItemType) {
@@ -211,6 +222,15 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     });
             });
         }
+
+        function SortTemplates(a, b) {
+            var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
+            if (nameA < nameB) //sort string ascending
+                return -1;
+            if (nameA > nameB)
+                return 1;
+            return 0; //default return value (no sorting)
+        };
 
         function WriteLog(msg) {
             console.log('1-Click Child-Links: ' + msg);
