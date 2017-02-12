@@ -12,7 +12,7 @@ It follows process work item types and workflow
 
 ### Setup your templates ###
 
-<a href="https://www.visualstudio.com/en-us/docs/work/productivity/work-item-template#manage" target="_blank">Manage work item templates</a>
+
 
 ![Export](img/screen01.png)
 
@@ -27,6 +27,13 @@ Find 1-Click Child-Links on toolbar menu
 Now you have Childs associated with the Work Item
 
 ![Export](img/screen03.png)
+
+## Release notes ##
+
+* v0.3.0 - Enforce correct order when adding child links to work item
+
+* v0.4.0 - Identifier to distinguish templates sets to be added in a single click  <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">Wiki</a>
+
 
 ## Learn more ##
 
