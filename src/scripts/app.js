@@ -99,8 +99,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             else if (taskTemplate.fields['System.IterationPath'].toLowerCase() == '@currentiteration')
                 workItem.push({ "op": "add", "path": "/fields/System.IterationPath", "value": teamSettings.backlogIteration.name + teamSettings.defaultIteration.path })
 
-            if (taskTemplate.fields['System.AssignedTo'] == null)
-                workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+            if (taskTemplate.fields['System.AssignedTo'] == null) {
+                if (currentWorkItem['System.AssignedTo'] != null)
+                    workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+            }
             else if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me')
                 workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": ctx.user.uniqueName })
 
@@ -109,26 +111,52 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings) {
 
+            var witClient = _WorkItemRestClient.getClient();
+            
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
-            _WorkItemRestClient.getClient().createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
+            witClient.createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
                 .then(function (response) {
                     //Add relation
-                    service.addWorkItemRelations([
-                        {
-                            rel: "System.LinkTypes.Hierarchy-Forward",
-                            url: response.url,
-                        }]);
-                    //Save 
-                    service.beginSaveWorkItem(function (response) {
-                        //WriteLog(" Saved");
-                    }, function (error) {
-                        ShowDialog(" Error saving: " + response);
-                    });
+                    if (service != null) {
+                        service.addWorkItemRelations([
+                            {
+                                rel: "System.LinkTypes.Hierarchy-Forward",
+                                url: response.url,
+                            }]);
+                        //Save 
+                        service.beginSaveWorkItem(function (response) {
+                            //WriteLog(" Saved");
+                        }, function (error) {
+                            ShowDialog(" Error saving: " + response);
+                        });
+                    } else {
+                        //save using RestClient
+                        var workItemId = currentWorkItem['System.Id']
+                        var document = [{
+                            op: "add",
+                            path: '/relations/-',
+                            value: {
+                                rel: "System.LinkTypes.Hierarchy-Forward",
+                                url: response.url,
+                                attributes: {
+                                    isLocked: false,
+                                }
+                            }
+                        }];
+
+                        witClient.updateWorkItem(document, workItemId)
+                            .then(function (response) {
+                                var a = response;
+                                VSS.getService(VSS.ServiceIds.Navigation).then(function (navigationService) {
+                                    navigationService.reload();
+                                });
+                            });
+                    }
                 });
         }
 
-        function AddChilds(service) {
+        function AddTasksOnForm(service) {
 
             var witClient = _WorkItemRestClient.getClient();
             var workClient = workRestClient.getClient();
@@ -166,6 +194,47 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             })
                     })
             })
+        }
+
+        function AddTasksOnGrid(workItemId) {
+
+            var witClient = _WorkItemRestClient.getClient();
+            var workClient = workRestClient.getClient();
+
+            var team = {
+                projectId: ctx.project.id,
+                teamId: ctx.team.id
+            }
+
+            workClient.getTeamSettings(team)
+                .then(function (teamSettings) {
+                    // Get the current values for a few of the common fields
+                    witClient.getWorkItem(workItemId, ["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
+                        .then(function (value) {
+                            var currentWorkItem = value.fields
+
+                            var workItemType = currentWorkItem["System.WorkItemType"];
+                            var childTypes = GetChildTypes(workItemType);
+                            if (childTypes == null)
+                                return;
+                            // get Templates
+                            getTemplates(childTypes)
+                                .then(function (response) {
+                                    if (response.length == 0) {
+                                        ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                        return;
+                                    }
+                                    // created childs alphabetical 
+                                    var templates = response.sort(SortTemplates);
+                                    var chain = Q.when();
+                                    templates.forEach(function (template) {
+                                        chain = chain.then(createChildFromtemplate(witClient, null, currentWorkItem, template, teamSettings));
+                                    });
+                                    return chain;
+
+                                })
+                        })
+                })
         }
 
         function createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings) {
@@ -262,8 +331,25 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 ctx = VSS.getWebContext();
 
                 getWorkItemFormService().then(function (service) {
-                    WriteLog("Init");
-                    AddChilds(service)
+                    service.hasActiveWorkItem()
+                        .then(function success(response) {
+                            if (response == true) {
+                                //form is open
+                                AddTasksOnForm(service);
+                            }
+                            else {
+                                // on grid
+                                var workItemId = 0
+                                if (context.workItemIds && context.workItemIds.length > 0) {
+                                    workItemId = context.workItemIds[0];
+                                }
+                                else if (context.id) {
+                                    workItemId = context.id;
+                                }
+
+                                AddTasksOnGrid(workItemId);
+                            }
+                        });
                 })
             },
 
