@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1.0,
     "id": "vsts-work-item-one-click-child-links",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "name": "1-Click Child-Links",
     "description": "Add Child-Links from predefined templates with a single click..",
     "public": false,
@@ -68,7 +68,9 @@
             "type": "ms.vss-web.action",
             "description": "1-Click Child-Links",
             "targets": [
-                "ms.vss-work-web.work-item-toolbar-menu"
+                "ms.vss-work-web.work-item-toolbar-menu", 
+                "ms.vss-work-web.backlog-item-menu",
+                "ms.vss-work-web.work-item-context-menu"
             ],
             "properties": {
                 "text": " 1-Click Child-Links",

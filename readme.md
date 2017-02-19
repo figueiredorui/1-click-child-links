@@ -35,11 +35,17 @@ Now you have Childs associated with the Work Item
 
 ## Release notes ##
 
-* v0.3.0 - Enforce correct order when adding child links to work item
+* v0.3.0 
 
-* v0.4.0 - Identifier to distinguish templates sets to be added in a single click  <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">Wiki</a>
+    Enforce correct order when adding child links to work item
 
+* v0.4.0
 
+    Identifier to distinguish templates sets to be added in a single click  <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">Wiki</a>
+
+* v0.5.0
+
+    1-Click Child-Links option available on Card and Backlog context menu.
 
 ## Usage ##
 
