@@ -42,6 +42,10 @@ Now you have Childs associated with the Work Item
 
     1-Click Child-Links option available on Card and Backlog context menu.
 
+* v0.6.0
+
+     1-Click Child-Links option available when selecting multiple work items
+
 ## Learn more ##
 
 This extension is an enhanced version of <a href="https://marketplace.visualstudio.com/items?itemName=ruifig.vsts-work-item-one-click-tasks" target="_blank">1-Click Tasks</a>

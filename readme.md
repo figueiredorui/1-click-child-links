@@ -47,6 +47,10 @@ Now you have Childs associated with the Work Item
 
     1-Click Child-Links option available on Card and Backlog context menu.
 
+* v0.6.0
+
+    1-Click Child-Links option available when selecting multiple work items
+
 ## Usage ##
 
 1. Clone the repository
