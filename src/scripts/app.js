@@ -112,7 +112,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings) {
 
             var witClient = _WorkItemRestClient.getClient();
-            
+
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
             witClient.createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
@@ -266,6 +266,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function GetChildTypes(workItemType) {
+
+            //"Microsoft.FeatureCategory"
+            //"Microsoft.EpicCategory"
+
             if (workItemType == 'Epic') {
                 return ['Feature']
             }
@@ -339,19 +343,19 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             }
                             else {
                                 // on grid
-                                var workItemId = 0
                                 if (context.workItemIds && context.workItemIds.length > 0) {
-                                    workItemId = context.workItemIds[0];
+
+                                    context.workItemIds.forEach(function (workItemId) {
+                                        AddTasksOnGrid(workItemId);
+                                    });
                                 }
                                 else if (context.id) {
-                                    workItemId = context.id;
+                                    var workItemId = context.id;
+                                    AddTasksOnGrid(workItemId);
                                 }
-
-                                AddTasksOnGrid(workItemId);
                             }
                         });
                 })
             },
-
         }
     });
