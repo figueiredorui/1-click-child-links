@@ -173,25 +173,27 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         var currentWorkItem = value
 
                         var workItemType = currentWorkItem["System.WorkItemType"];
-                        var childTypes = GetChildTypes(workItemType);
-                        if (childTypes == null)
-                            return;
-                        // get Templates
-                        getTemplates(childTypes)
-                            .then(function (response) {
-                                if (response.length == 0) {
-                                    ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                        GetChildTypes(witClient, workItemType)
+                            .then(function (childTypes) {
+                                if (childTypes == null)
                                     return;
-                                }
-                                // created childs alphabetical 
-                                var templates = response.sort(SortTemplates);
-                                var chain = Q.when();
-                                templates.forEach(function (template) {
-                                    chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
-                                });
-                                return chain;
+                                // get Templates
+                                getTemplates(childTypes)
+                                    .then(function (response) {
+                                        if (response.length == 0) {
+                                            ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                            return;
+                                        }
+                                        // created childs alphabetical 
+                                        var templates = response.sort(SortTemplates);
+                                        var chain = Q.when();
+                                        templates.forEach(function (template) {
+                                            chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
+                                        });
+                                        return chain;
 
-                            })
+                                    })
+                            });
                     })
             })
         }
@@ -214,25 +216,29 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             var currentWorkItem = value.fields
 
                             var workItemType = currentWorkItem["System.WorkItemType"];
-                            var childTypes = GetChildTypes(workItemType);
-                            if (childTypes == null)
-                                return;
-                            // get Templates
-                            getTemplates(childTypes)
-                                .then(function (response) {
-                                    if (response.length == 0) {
-                                        ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
-                                        return;
-                                    }
-                                    // created childs alphabetical 
-                                    var templates = response.sort(SortTemplates);
-                                    var chain = Q.when();
-                                    templates.forEach(function (template) {
-                                        chain = chain.then(createChildFromtemplate(witClient, null, currentWorkItem, template, teamSettings));
-                                    });
-                                    return chain;
+                            GetChildTypes(witClient, workItemType)
+                                .then(function (childTypes) {
 
-                                })
+
+                                    if (childTypes == null)
+                                        return;
+                                    // get Templates
+                                    getTemplates(childTypes)
+                                        .then(function (response) {
+                                            if (response.length == 0) {
+                                                ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                                return;
+                                            }
+                                            // created childs alphabetical 
+                                            var templates = response.sort(SortTemplates);
+                                            var chain = Q.when();
+                                            templates.forEach(function (template) {
+                                                chain = chain.then(createChildFromtemplate(witClient, null, currentWorkItem, template, teamSettings));
+                                            });
+                                            return chain;
+
+                                        })
+                                });
                         })
                 })
         }
@@ -265,34 +271,97 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         }
 
-        function GetChildTypes(workItemType) {
+        function findWorkTypeCategory(categories, workItemType) {
+            for (category of categories) {
+                var found = category.workItemTypes.find(function (w) { return w.name == workItemType; });
+                if (found != null) {
+                    return category;
+                }
+            }
+        }
 
-            //"Microsoft.FeatureCategory"
+        function GetChildTypes(witClient, workItemType) {
+
+            console.log('GetChildTypes')
+
+            return witClient.getWorkItemTypeCategories(VSS.getWebContext().project.name)
+                .then(function (response) {
+                    var categories = response;
+
+                    var category = findWorkTypeCategory(categories, workItemType);
+
+                    if (category != null) {
+
+                        if (category.referenceName == 'Microsoft.EpicCategory') {
+                            return witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.FeatureCategory')
+                                .then(function (response) {
+                                    var category = response;
+
+                                    return category.workItemTypes.map(function (item) { return item.name });
+                                });
+                        }
+                        if (category.referenceName == 'Microsoft.FeatureCategory') {
+
+                            var requests = [];
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'))
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory'))
+
+                            return Q.all(requests)
+                                .then(function (response) {
+                                    var categories = response;
+
+                                    var result = [];
+                                    categories.forEach(function (category) {
+                                        category.workItemTypes.forEach(function (workItemType) {
+                                            result.push(workItemType.name);
+                                        });
+                                    });
+                                    
+                                    return result;
+                                });
+                        }
+                        if (category.referenceName == 'Microsoft.RequirementCategory') {
+                            return ['Task']
+                        }
+                        if (category.referenceName == 'Microsoft.BugCategory') {
+                            return ['Task']
+                        }
+                        if (category.referenceName == 'Microsoft.TaskCategory') {
+                            return ['Task']
+                        }
+
+                    }
+                });
+
             //"Microsoft.EpicCategory"
-
-            if (workItemType == 'Epic') {
-                return ['Feature']
-            }
-            if (workItemType == 'Feature') {
-                return ['Product Backlog Item', 'User Story', 'Requirement', 'Bug']
-            }
-            if (workItemType == 'Product Backlog Item') {
-                return ['Task']
-            }
-            if (workItemType == 'User Story') {
-                return ['Task']
-            }
-            if (workItemType == 'Requirement') {
-                return ['Task']
-            }
-            if (workItemType == 'Bug') {
-                return ['Task']
-            }
-            if (workItemType == 'Task') {
-                return ['Task']
-            }
-            WriteLog(workItemType + ' not supported.')
-            return null;
+            //"Microsoft.FeatureCategory"
+            //Microsoft.RequirementCategory
+            //Microsoft.BugCategory
+            /*
+                        if (workItemType == 'Epic') {
+                            return ['Feature']
+                        }
+                        if (workItemType == 'Feature') {
+                            return ['Product Backlog Item', 'User Story', 'Requirement', 'Bug']
+                        }
+                        if (workItemType == 'Product Backlog Item') {
+                            return ['Task']
+                        }
+                        if (workItemType == 'User Story') {
+                            return ['Task']
+                        }
+                        if (workItemType == 'Requirement') {
+                            return ['Task']
+                        }
+                        if (workItemType == 'Bug') {
+                            return ['Task']
+                        }
+                        if (workItemType == 'Task') {
+                            return ['Task']
+                        }
+                        */
+            // WriteLog(workItemType + ' not supported.')
+            //  return null;
         }
 
         function ShowDialog(message) {
