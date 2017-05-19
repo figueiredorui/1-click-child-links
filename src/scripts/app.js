@@ -260,9 +260,11 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (filters) {
                 var isValid = false;
                 for (var i = 0; i < filters.length; i++) {
-                    isValid = filters[i].split(',').includes(currentWorkItem["System.WorkItemType"]);
-                    if (isValid)
+                    var found = filters[i].split(',').find(function(f) { return f.trim() == currentWorkItem["System.WorkItemType"]});
+                    if (found){
+                        isValid = true;
                         break;
+                    }
                 }
                 return isValid;
             } else {
