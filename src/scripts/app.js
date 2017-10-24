@@ -254,9 +254,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             };
         }
 
-        function IsValidTemplate(currentWorkItem, taskTemplate) {
+        function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
-            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g)
+            var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
             if (filters) {
                 var isValid = false;
                 for (var i = 0; i < filters.length; i++) {
