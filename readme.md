@@ -51,6 +51,10 @@ Now you have Childs associated with the Work Item
 
     1-Click Child-Links option available when selecting multiple work items
 
+* v0.8.0
+
+    Template sets can now be created on keywords in titles on top of Work Item Types
+
 ## Usage ##
 
 1. Clone the repository
@@ -71,4 +75,4 @@ Note: To avoid `tfx` prompting for your token when publishing, login in beforeha
 
 ## Credits ##
 
-Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple
+Clone from https://github.com/figueiredorui/1-click-child-links
