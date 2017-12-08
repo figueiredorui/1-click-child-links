@@ -75,4 +75,4 @@ Note: To avoid `tfx` prompting for your token when publishing, login in beforeha
 
 ## Credits ##
 
--Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple
+Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple

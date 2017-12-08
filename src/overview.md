@@ -56,4 +56,4 @@ This extension is an enhanced version of <a href="https://marketplace.visualstud
 
 The <a href="https://github.com/figueiredorui/1-click-child-links" target="_blank">source</a> for this extension is on GitHub. Take, fork, and extend.
 
-Let's discuss <a href="https://github.com/figueiredorui/1-click-child-links/issues" target="_blank">Issues and Improvements</a>		
+Let's discuss <a href="https://github.com/figueiredorui/1-click-child-links/issues" target="_blank">Issues and Improvements</a>
