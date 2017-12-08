@@ -258,7 +258,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
-            var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
+            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
             if (filters) {
                 var isValid = false;
                 for (var i = 0; i < filters.length; i++) {
@@ -277,8 +277,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
             
-            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
-            var curTitle = currentWorkItem["System.Title"].match(/[^[\]]+(?=])/g);
+            var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
+            var curTitle = currentWorkItem["System.Title"].match(/[^{\}]+(?=})/g);
             if (filters) {
                 var isValid = false;
                 if (curTitle) {
