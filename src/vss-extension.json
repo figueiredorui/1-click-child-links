@@ -5,7 +5,7 @@
     "name": "1-Click Child-Links",
     "description": "Add Child-Links from predefined templates with a single click..",
     "public": false,
-    "publisher": "omireault",
+    "publisher": "ruifig",
     "repository": {
         "type": "git",
         "uri": "https://github.com/figueiredorui/1-click-child-links"

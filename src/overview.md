@@ -54,6 +54,6 @@ Now you have Childs associated with the Work Item
 
 This extension is an enhanced version of <a href="https://marketplace.visualstudio.com/items?itemName=ruifig.vsts-work-item-one-click-tasks" target="_blank">1-Click Tasks</a>
 
-The <a href="https://github.com/omireault/1-click-child-links" target="_blank">source</a> for this extension is on GitHub. Take, fork, and extend.
+The <a href="https://github.com/figueiredorui/1-click-child-links" target="_blank">source</a> for this extension is on GitHub. Take, fork, and extend.
 
-Let's discuss <a href="https://github.com/omireault/1-click-child-links/issues" target="_blank">Issues and Improvements</a>
+Let's discuss <a href="https://github.com/figueiredorui/1-click-child-links/issues" target="_blank">Issues and Improvements</a>		
