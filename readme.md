@@ -51,6 +51,10 @@ Now you have Childs associated with the Work Item
 
     1-Click Child-Links option available when selecting multiple work items
 
+* v0.8.0
+
+    Template sets can now be created on keywords in titles on top of Work Item Types
+
 ## Usage ##
 
 1. Clone the repository

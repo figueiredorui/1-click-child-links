@@ -265,24 +265,48 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return function () {
                 return getTemplate(template.id).then(function (taskTemplate) {
                     // Create child 
-                    if (IsValidTemplate(currentWorkItem, taskTemplate)) {
-                        createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                    if (IsValidTemplateWIT(currentWorkItem, taskTemplate)) {
+                        if (IsValidTemplateTitle(currentWorkItem, taskTemplate)) {
+                           createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                        }
                     }
                 });;
             };
         }
 
-        function IsValidTemplate(currentWorkItem, taskTemplate) {
+        function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
-            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g)
+            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
             if (filters) {
                 var isValid = false;
                 for (var i = 0; i < filters.length; i++) {
-                    var found = filters[i].split(',').find(function(f) { return f.trim() == currentWorkItem["System.WorkItemType"]});
+                    var found = filters[i].split(',').find(function(f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase()});
                     if (found){
                         isValid = true;
                         break;
                     }
+                }
+                return isValid;
+            } else {
+                return true;
+            }
+
+        }
+
+        function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
+            
+            var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
+            var curTitle = currentWorkItem["System.Title"].match(/[^{\}]+(?=})/g);
+            if (filters) {
+                var isValid = false;
+                if (curTitle) {
+                    for (var i = 0; i < filters.length; i++) {
+                    if (curTitle.indexOf(filters[i]) > -1) {
+                        isValid = true;
+                        break; 
+                    }
+                }
+
                 }
                 return isValid;
             } else {

@@ -46,6 +46,10 @@ Now you have Childs associated with the Work Item
 
      1-Click Child-Links option available when selecting multiple work items
 
+* v0.8.0
+
+    Template sets can now be created on keywords in titles on top of Work Item Types
+
 ## Learn more ##
 
 This extension is an enhanced version of <a href="https://marketplace.visualstudio.com/items?itemName=ruifig.vsts-work-item-one-click-tasks" target="_blank">1-Click Tasks</a>
