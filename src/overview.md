@@ -49,6 +49,8 @@ Now you have Childs associated with the Work Item
 * v0.8.0
 
     Template sets can now be created on keywords in titles on top of Work Item Types
+    Inherit values from parent work item fields 
+    <a href="https://github.com/figueiredorui/1-click-child-links/issues/17" target="_blank">#17</a>
 
 ## Learn more ##
 
