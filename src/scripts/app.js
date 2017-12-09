@@ -69,10 +69,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (key.indexOf('System.Tags') >= 0) { //not supporting tags for now
                 return false;
             }
-            if (taskTemplate.fields[key].toLowerCase() == '@me') { //not supporting current identity
+            if (taskTemplate.fields[key].toLowerCase() == '@me') { //current identity is handled later
                 return false;
             }
-            if (taskTemplate.fields[key].toLowerCase() == '@currentiteration') { //not supporting current iteration
+            if (taskTemplate.fields[key].toLowerCase() == '@currentiteration') { //current iteration is handled later
                 return false;
             }
 
@@ -84,27 +84,45 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             for (var key in taskTemplate.fields) {
                 if (IsPropertyValid(taskTemplate, key)) {
-                    workItem.push({ "op": "add", "path": "/fields/" + key, "value": taskTemplate.fields[key] })
+                    //if field value is empty copies value from parent
+                    if (taskTemplate.fields[key] == ''){
+                        if (currentWorkItem[key] != null) {
+                            workItem.push({ "op": "add", "path": "/fields/" + key, "value": currentWorkItem[key] })
+                        }
+                    }
+                    else{
+                        workItem.push({ "op": "add", "path": "/fields/" + key, "value": taskTemplate.fields[key] })
+                    }
                 }
             }
 
+            // if template has no title field copies value from parent
             if (taskTemplate.fields['System.Title'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.Title", "value": currentWorkItem['System.Title'] })
-
+            
+            // if template has no AreaPath field copies value from parent
             if (taskTemplate.fields['System.AreaPath'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.AreaPath", "value": currentWorkItem['System.AreaPath'] })
 
+            // if template has no IterationPath field copies value from parent
+            // check if IterationPath field value is @currentiteration
             if (taskTemplate.fields['System.IterationPath'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.IterationPath", "value": currentWorkItem['System.IterationPath'] })
             else if (taskTemplate.fields['System.IterationPath'].toLowerCase() == '@currentiteration')
                 workItem.push({ "op": "add", "path": "/fields/System.IterationPath", "value": teamSettings.backlogIteration.name + teamSettings.defaultIteration.path })
 
-            if (taskTemplate.fields['System.AssignedTo'] == null) {
-                if (currentWorkItem['System.AssignedTo'] != null)
-                    workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+            // check if AssignedTo field value is @me
+            if (taskTemplate.fields['System.AssignedTo'] != null) {
+                if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me') {
+                    workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": ctx.user.uniqueName })
+                }
+
+                // if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '') {
+                //     if (WIT['System.AssignedTo'] != null) {
+                //         workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
+                //     }
+                // }
             }
-            else if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me')
-                workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": ctx.user.uniqueName })
 
             return workItem;
         }
