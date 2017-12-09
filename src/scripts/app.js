@@ -79,6 +79,19 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return true;
         }
 
+        function replaceReferenceToParentField(fieldValue, currentWorkItem) {
+            var filters = fieldValue.match(/[^{\}]+(?=})/g);
+            if (filters) {
+                for (var i = 0; i < filters.length; i++) {
+                    var parentField = filters[i];
+                    var parentValue = currentWorkItem[parentField];
+
+                    fieldValue = fieldValue.replace('{' + parentField + '}', parentValue)
+                }
+            }
+            return fieldValue;
+        }
+
         function createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings) {
             var workItem = [];
 
@@ -91,27 +104,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         }
                     }
                     else {
-
-                        //check for references to parent field - {fieldName}
                         var fieldValue = taskTemplate.fields[key];
-
-                        var filters = fieldValue.match(/[^{\}]+(?=})/g);
-                        if (filters) {
-                            for (var i = 0; i < filters.length; i++) {
-                                var parentField = filters[i];
-                                var parentValue = currentWorkItem[parentField];
-
-                                fieldValue = fieldValue.replace('{' + parentField + '}', parentValue)
-                            }
-                        }
-
-
+                        //check for references to parent fields - {fieldName}
+                        fieldValue = replaceReferenceToParentField(fieldValue, currentWorkItem);
+                        
                         workItem.push({ "op": "add", "path": "/fields/" + key, "value": fieldValue })
                     }
-
-
-                    //check for references to parent field - {fieldName}
-
                 }
             }
 
