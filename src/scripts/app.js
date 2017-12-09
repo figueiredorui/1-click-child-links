@@ -85,21 +85,40 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             for (var key in taskTemplate.fields) {
                 if (IsPropertyValid(taskTemplate, key)) {
                     //if field value is empty copies value from parent
-                    if (taskTemplate.fields[key] == ''){
+                    if (taskTemplate.fields[key] == '') {
                         if (currentWorkItem[key] != null) {
                             workItem.push({ "op": "add", "path": "/fields/" + key, "value": currentWorkItem[key] })
                         }
                     }
-                    else{
-                        workItem.push({ "op": "add", "path": "/fields/" + key, "value": taskTemplate.fields[key] })
+                    else {
+
+                        //check for references to parent field - {fieldName}
+                        var fieldValue = taskTemplate.fields[key];
+
+                        var filters = fieldValue.match(/[^{\}]+(?=})/g);
+                        if (filters) {
+                            for (var i = 0; i < filters.length; i++) {
+                                var parentField = filters[i];
+                                var parentValue = currentWorkItem[parentField];
+
+                                fieldValue = fieldValue.replace('{' + parentField + '}', parentValue)
+                            }
+                        }
+
+
+                        workItem.push({ "op": "add", "path": "/fields/" + key, "value": fieldValue })
                     }
+
+
+                    //check for references to parent field - {fieldName}
+
                 }
             }
 
             // if template has no title field copies value from parent
             if (taskTemplate.fields['System.Title'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.Title", "value": currentWorkItem['System.Title'] })
-            
+
             // if template has no AreaPath field copies value from parent
             if (taskTemplate.fields['System.AreaPath'] == null)
                 workItem.push({ "op": "add", "path": "/fields/System.AreaPath", "value": currentWorkItem['System.AreaPath'] })
@@ -176,47 +195,18 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function AddTasksOnForm(service) {
 
-            var witClient = _WorkItemRestClient.getClient();
-            var workClient = workRestClient.getClient();
-
-            var team = {
-                projectId: ctx.project.id,
-                teamId: ctx.team.id
-            }
-
-            workClient.getTeamSettings(team).then(function (teamSettings) {
-                // Get the current values for a few of the common fields
-                service.getFieldValues(["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
-                    .then(function (value) {
-                        var currentWorkItem = value
-
-                        var workItemType = currentWorkItem["System.WorkItemType"];
-                        GetChildTypes(witClient, workItemType)
-                            .then(function (childTypes) {
-                                if (childTypes == null)
-                                    return;
-                                // get Templates
-                                getTemplates(childTypes)
-                                    .then(function (response) {
-                                        if (response.length == 0) {
-                                            ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
-                                            return;
-                                        }
-                                        // created childs alphabetical 
-                                        var templates = response.sort(SortTemplates);
-                                        var chain = Q.when();
-                                        templates.forEach(function (template) {
-                                            chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
-                                        });
-                                        return chain;
-
-                                    })
-                            });
-                    })
-            })
+            service.getId()
+                .then(function (workItemId) {
+                    return AddTasks(workItemId, service)
+                });
         }
 
         function AddTasksOnGrid(workItemId) {
+
+            return AddTasks(workItemId, null)
+        }
+
+        function AddTasks(workItemId, service) {
 
             var witClient = _WorkItemRestClient.getClient();
             var workClient = workRestClient.getClient();
@@ -229,15 +219,15 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             workClient.getTeamSettings(team)
                 .then(function (teamSettings) {
                     // Get the current values for a few of the common fields
-                    witClient.getWorkItem(workItemId, ["System.Id", "System.Title", "System.State", "System.CreatedDate", "System.IterationPath", "System.AreaPath", "System.AssignedTo", "System.RelatedLinkCount", "System.WorkItemType"])
+                    witClient.getWorkItem(workItemId)
                         .then(function (value) {
                             var currentWorkItem = value.fields
+
+                            currentWorkItem['System.Id'] = workItemId;
 
                             var workItemType = currentWorkItem["System.WorkItemType"];
                             GetChildTypes(witClient, workItemType)
                                 .then(function (childTypes) {
-
-
                                     if (childTypes == null)
                                         return;
                                     // get Templates
@@ -251,7 +241,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                             var templates = response.sort(SortTemplates);
                                             var chain = Q.when();
                                             templates.forEach(function (template) {
-                                                chain = chain.then(createChildFromtemplate(witClient, null, currentWorkItem, template, teamSettings));
+                                                chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
                                             });
                                             return chain;
 
@@ -267,7 +257,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     // Create child 
                     if (IsValidTemplateWIT(currentWorkItem, taskTemplate)) {
                         if (IsValidTemplateTitle(currentWorkItem, taskTemplate)) {
-                           createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
+                            createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
                         }
                     }
                 });;
@@ -280,8 +270,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (filters) {
                 var isValid = false;
                 for (var i = 0; i < filters.length; i++) {
-                    var found = filters[i].split(',').find(function(f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase()});
-                    if (found){
+                    var found = filters[i].split(',').find(function (f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase() });
+                    if (found) {
                         isValid = true;
                         break;
                     }
@@ -294,18 +284,18 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
-            
+
             var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
             var curTitle = currentWorkItem["System.Title"].match(/[^{\}]+(?=})/g);
             if (filters) {
                 var isValid = false;
                 if (curTitle) {
                     for (var i = 0; i < filters.length; i++) {
-                    if (curTitle.indexOf(filters[i]) > -1) {
-                        isValid = true;
-                        break; 
+                        if (curTitle.indexOf(filters[i]) > -1) {
+                            isValid = true;
+                            break;
+                        }
                     }
-                }
 
                 }
                 return isValid;
@@ -325,8 +315,6 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function GetChildTypes(witClient, workItemType) {
-
-            console.log('GetChildTypes')
 
             return witClient.getWorkItemTypeCategories(VSS.getWebContext().project.name)
                 .then(function (response) {
@@ -360,7 +348,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                             result.push(workItemType.name);
                                         });
                                     });
-                                    
+
                                     return result;
                                 });
                         }
@@ -444,6 +432,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         return {
 
             create: function (context) {
+                WriteLog('init');
 
                 ctx = VSS.getWebContext();
 
