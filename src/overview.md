@@ -49,8 +49,8 @@ Now you have Childs associated with the Work Item
 * v0.8.0
 
     Template sets can now be created on keywords in titles on top of Work Item Types
-    Inherit values from parent work item fields if template field value is empty
-    <a href="https://github.com/figueiredorui/1-click-child-links/issues/17" target="_blank">#17</a>
+    Inherit values from parent work item fields
+    <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Inherit-field-values-from-parent-work-item" target="_blank">Wiki</a>
     Copy field value from parent <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Copy-field-value-from-parent" target="_blank">Wiki</a>
     
 
