@@ -7,38 +7,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return _WorkItemServices.WorkItemFormService.getService();
         }
 
-        function getApiUrl(method) {
-
-            var collection = ctx.collection.uri;
-            var project = ctx.project.name;
-            var team = ctx.team.name;
-
-            var url = collection + project + '/' + team + '/_apis/wit' + method;
-            return url;
-        }
-
-        function callRestApi(method) {
-
-            return VSS.getAccessToken()
-                .then(function (accessToken) {
-
-                    var url = getApiUrl(method);
-                    return $.ajax({
-                        url: url,
-                        dataType: 'json',
-                        headers: {
-                            'Authorization': 'Basic ' + btoa("" + ":" + accessToken.token)
-                        }
-                    })
-                });
-        }
-
         function getTemplates(workItemTypes) {
 
             var requests = []
+            var witClient = _WorkItemRestClient.getClient();
+            
             workItemTypes.forEach(function (workItemType) {
-
-                var request = callRestApi('/templates?workItemTypeName=' + workItemType);
+                
+                var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
                 requests.push(request);
             }, this);
 
@@ -47,9 +23,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
                     var templates = [];
                     templateTypes.forEach(function (templateType) {
-                        if (templateType.count > 0) {
+                        if (templateType.length > 0) {
 
-                            templateType.value.forEach(function (element) {
+                            templateType.forEach(function (element) {
                                 templates.push(element)
                             }, this);
                         }
@@ -59,7 +35,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function getTemplate(id) {
-            return callRestApi('/templates/' + id);
+            var witClient = _WorkItemRestClient.getClient();
+            return witClient.getTemplate(ctx.project.id, ctx.team.id, id);
         }
 
         function IsPropertyValid(taskTemplate, key) {
