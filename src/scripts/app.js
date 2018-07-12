@@ -328,7 +328,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 });
                         }
                         if (category.referenceName == 'Microsoft.RequirementCategory') {
-                            return ['Task']
+                            return witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory')
+                                .then(function (response) {
+                                    var category = response;
+
+                                    return category.workItemTypes.map(function (item) { return item.name });
+                                });
                         }
                         if (category.referenceName == 'Microsoft.BugCategory') {
                             return ['Task']
