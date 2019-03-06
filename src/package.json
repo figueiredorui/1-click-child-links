@@ -11,7 +11,6 @@
   },
   "name": "vsts-work-item-one-click-child-links",
   "private": true,
-  "version": "0.6.0",
-  "scripts": {
-  }
+  "version": "0.10.0",
+  "scripts": {}
 }
