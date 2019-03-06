@@ -1,35 +1,28 @@
 ## 1-Click Child-Links ##
 
-1-Click Child-Links is a Visual Studio Team Services extension to add Child-Links from predefined templates using a single click.
+<a href="https://marketplace.visualstudio.com/items?itemName=ruifig.vsts-work-item-one-click-child-links" target="_blank">1-Click Child-Links</a> is an Azure DevOps extension for creating multiple work items as children via single click, where each work item is based on a single pre-defined template.
 
-Download <a href="https://marketplace.visualstudio.com/items?itemName=ruifig.vsts-work-item-one-click-child-links" target="_blank">here</a>
+Azure DevOps offers team-specific work item templating as <a href="https://docs.microsoft.com/en-us/azure/devops/boards/backlogs/work-item-template?view=azure-devops&tabs=browser" target="_blank">core functionality</a> with which you can quickly apply pre-populated values for your team's commonly used fields per work item type.
 
-Team Services allows you to create work item templates.
-With work item templates you can quickly create work items which have pre-populated values for your team's commonly used fields.
+The child work items created by this extension are based on the hierarchy of work item types defined in the process template (<a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/agile-process-workflow?view=azure-devops" target="_blank">Agile</a>, <a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/scrum-process-workflow?view=azure-devops" target="_blank">Scrum</a>, <a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/cmmi-process-workflow?view=azure-devops" target="_blank">CMMI</a>).
 
-1-Click Child-Links uses predefined templates and add them as a Child Link.
+For example, if you're using a process inherited from the agile template with a custom requirement-level type called defect and 3 task templates defined, using 1-click on a user story or defect will generate 3 child tasks, one for each defined template. It's also possible to limit which parent work items apply to each template by putting the list of applicable parent work item types in the child template's description field , like this: `[Product Backlog Item,Defect]`
 
-It follows process work item types and workflow
+### Define team templates ###
 
-* <a href="https://www.visualstudio.com/en-us/docs/work/guidance/agile-process-workflow" target="_blank">Agile</a>
-* <a href="https://www.visualstudio.com/en-us/docs/work/guidance/scrum-process-workflow" target="_blank">Scrum</a>
-* <a href="https://www.visualstudio.com/en-us/docs/work/guidance/cmmi-process-workflow" target="_blank">CMMI</a>
+<a href="https://docs.microsoft.com/en-us/azure/devops/boards/backlogs/work-item-template?view=azure-devops&tabs=browser#manage" target="_blank">Manage work item templates</a>
 
-### Setup your templates ###
+<img src="src/img/screen01.png" alt="Define team templates" />
 
-<a href="https://www.visualstudio.com/en-us/docs/work/productivity/work-item-template#manage" target="_blank">Manage work item templates</a>
-
-<img src="src/img/screen01.png" alt="Create your task templates" />
-
-### Create / open a Work Item ###
+### Create / open a work item ###
 
 Find 1-Click Child-Links on toolbar menu
 
-<img src="src/img/screen02.png" alt="1-Click Child-Links on the menu"/>
+<img src="src/img/screen02.png" alt="1-Click Child-Links on work item form menu"/>
 
 ### Done ###
 
-Now you have Childs associated with the Work Item
+You should now have children associated with the open work item.
 
 <img src="src/img/screen03.png" alt="Done"/>
 
