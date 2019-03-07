@@ -266,6 +266,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 //    }
 
                 // Match work item type if present, otherwise assume the first record without a work item type applies.
+                var hasWorkItemType = jsonFilters.applywhen.filter(
+                    function (el) {
+                        return (el['System.WorkItemType'] !== "undefined");
+                    }
+                );
+
                 var applicableFilter = jsonFilters.applywhen.filter(
                     function (el) {
                         return (
@@ -274,7 +280,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             matchField('System.State', currentWorkItem, el) &&
                             matchField('System.Tags', currentWorkItem, el) &&
                             matchField('System.Title', currentWorkItem, el) &&
-                            matchField('System.WorkItemType', currentWorkItem, el)
+                            (hasWorkItemType.length > 0 ? matchField('System.WorkItemType', currentWorkItem, el) : true)
                         );
                     }
                 );
