@@ -6,7 +6,31 @@ Azure DevOps offers team-specific work item templating as <a href="https://docs.
 
 The child work items created by this extension are based on the hierarchy of work item types defined in the process template (<a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/agile-process-workflow?view=azure-devops" target="_blank">Agile</a>, <a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/scrum-process-workflow?view=azure-devops" target="_blank">Scrum</a>, <a href="https://docs.microsoft.com/en-us/azure/devops/boards/work-items/guidance/cmmi-process-workflow?view=azure-devops" target="_blank">CMMI</a>).
 
-For example, if you're using a process inherited from the agile template with a custom requirement-level type called defect and 3 task templates defined, using 1-click on a user story or defect will generate 3 child tasks, one for each defined template. It's also possible to limit which parent work items apply to each template by putting the list of applicable parent work item types in the child template's description field , like this: `[Product Backlog Item,Defect]`
+For example, if you're using a process inherited from the agile template with a custom requirement-level type called defect and 3 task templates defined, using 1-click on a user story or defect will generate 3 child tasks, one for each defined template.
+
+It's also possible to limit which parent work items apply to each template in one of two ways:
+
+Simplified: put the list of applicable parent work item types in the child template's description field, like this: `[Product Backlog Item,Defect]`
+
+Complex: put a minified (single line) JSON string into the child template's description field, like this:
+
+``` json
+{
+    "applywhen": [
+    {
+        "System.State": "Approved",
+        "System.Tags" : ["Blah", "ClickMe"],
+        "System.WorkItemType": "Product Backlog Item"
+    },
+    {
+        "System.BoardColumn": "Testing",
+        "System.BoardLane": "Off radar",
+        "System.State": "Custom State",
+        "System.Title": "Repeatable item",
+        "System.WorkItemType": "Custom Type"
+    }]
+}
+```
 
 ### Define team templates ###
 
