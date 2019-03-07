@@ -212,21 +212,21 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                                 ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
                                                 return;
                                             }
-                                            // created childs alphabetical 
+                                            // Create children alphabetically.
                                             var templates = response.sort(SortTemplates);
                                             var chain = Q.when();
                                             templates.forEach(function (template) {
-                                                chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
+                                                chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings));
                                             });
                                             return chain;
 
-                                        })
+                                        });
                                 });
                         })
                 })
         }
 
-        function createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings) {
+        function createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings) {
             return function () {
                 return getTemplate(template.id).then(function (taskTemplate) {
                     // Create child 
@@ -235,27 +235,35 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
                         }
                     }
-                });;
+                });
             };
         }
 
         function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
-            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
-            if (filters) {
-                var isValid = false;
-                for (var i = 0; i < filters.length; i++) {
-                    var found = filters[i].split(',').find(function (f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase() });
-                    if (found) {
-                        isValid = true;
-                        break;
-                    }
-                }
-                return isValid;
-            } else {
-                return true;
-            }
+            // We need to maintain backward compatibility with the original filtering approach using square brackets.
+            // If not empty, does the description have the old square bracket approach or new JSON?
+            var applyWhen = extractJSON(taskTemplate.description)[0];
 
+            if (IsJsonString(JSON.stringify(applyWhen))) {
+                // Match work item type if present, otherwise assume the first record without a work item type applies.
+            } else {
+                var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
+
+                if (filters) {
+                    var isValid = false;
+                    for (var i = 0; i < filters.length; i++) {
+                        var found = filters[i].split(',').find(function (f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase() });
+                        if (found) {
+                            isValid = true;
+                            break;
+                        }
+                    }
+                    return isValid;
+                } else {
+                    return true;
+                }
+            }
         }
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
@@ -374,6 +382,44 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function WriteLog(msg) {
             console.log('1-Click Child-Links: ' + msg);
+        }
+
+        function extractJSON(str) {
+            var firstOpen, firstClose, candidate;
+            firstOpen = str.indexOf('{', firstOpen + 1);
+            //console.log('firstopen: ', firstOpen);
+            if (firstOpen != -1) {
+                do {
+                    firstClose = str.lastIndexOf('}');
+                    //console.log('firstOpen: ' + firstOpen, 'firstClose: ' + firstClose);
+                    if (firstClose <= firstOpen) {
+                        return null;
+                    }
+                    do {
+                        candidate = str.substring(firstOpen, firstClose + 1);
+                        //console.log('candidate: ' + candidate);
+                        try {
+                            var res = JSON.parse(candidate);
+                            //console.log('...found');
+                            return [res, firstOpen, firstClose + 1];
+                        }
+                        catch (e) {
+                            console.log('...failed');
+                        }
+                        firstClose = str.substr(0, firstClose).lastIndexOf('}');
+                    } while (firstClose > firstOpen);
+                    firstOpen = str.indexOf('{', firstOpen + 1);
+                } while (firstOpen != -1);
+            } else { return ''; }
+        }
+
+        function IsJsonString(str) {
+            try {
+                JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+            return true;
         }
 
         return {
