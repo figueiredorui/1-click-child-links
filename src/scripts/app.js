@@ -189,14 +189,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             var team = {
                 projectId: ctx.project.id,
                 teamId: ctx.team.id
-            }
+            };
 
             workClient.getTeamSettings(team)
                 .then(function (teamSettings) {
                     // Get the current values for a few of the common fields
                     witClient.getWorkItem(workItemId)
                         .then(function (value) {
-                            var currentWorkItem = value.fields
+                            var currentWorkItem = value.fields;
 
                             currentWorkItem['System.Id'] = workItemId;
 
@@ -294,81 +294,53 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return witClient.getWorkItemTypeCategories(VSS.getWebContext().project.name)
                 .then(function (response) {
                     var categories = response;
-
                     var category = findWorkTypeCategory(categories, workItemType);
 
-                    if (category != null) {
+                    if (category !== null) {
+                        var requests = [];
+                        var workClient = workRestClient.getClient();
 
-                        if (category.referenceName == 'Microsoft.EpicCategory') {
+                        var team = {
+                            projectId: ctx.project.id,
+                            teamId: ctx.team.id
+                        };
+
+                        bugsBehavior = workClient.getTeamSettings(team).bugsBehavior; //Off, AsTasks, AsRequirements
+
+                        if (category.referenceName === 'Microsoft.EpicCategory') {
                             return witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.FeatureCategory')
                                 .then(function (response) {
                                     var category = response;
 
-                                    return category.workItemTypes.map(function (item) { return item.name });
+                                    return category.workItemTypes.map(function (item) { return item.name; });
                                 });
+                        } else if (category.referenceName === 'Microsoft.FeatureCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'));
+                            if (bugsBehavior === 'AsRequirements') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                        } else if (category.referenceName === 'Microsoft.RequirementCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
+                            if (bugsBehavior === 'AsTasks') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                        } else if (category.referenceName === 'Microsoft.BugCategory' && bugsBehavior === 'AsRequirements') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
+                        } else if (category.referenceName === 'Microsoft.TaskCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
                         }
-                        if (category.referenceName == 'Microsoft.FeatureCategory') {
 
-                            var requests = [];
-                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'))
-                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory'))
+                        return Q.all(requests)
+                            .then(function (response) {
+                                var categories = response;
 
-                            return Q.all(requests)
-                                .then(function (response) {
-                                    var categories = response;
-
-                                    var result = [];
-                                    categories.forEach(function (category) {
-                                        category.workItemTypes.forEach(function (workItemType) {
-                                            result.push(workItemType.name);
-                                        });
+                                var result = [];
+                                categories.forEach(function (category) {
+                                    category.workItemTypes.forEach(function (workItemType) {
+                                        result.push(workItemType.name);
                                     });
-
-                                    return result;
                                 });
-                        }
-                        if (category.referenceName == 'Microsoft.RequirementCategory') {
-                            return ['Task']
-                        }
-                        if (category.referenceName == 'Microsoft.BugCategory') {
-                            return ['Task']
-                        }
-                        if (category.referenceName == 'Microsoft.TaskCategory') {
-                            return ['Task']
-                        }
 
+                                return result;
+                            });
                     }
                 });
-
-            //"Microsoft.EpicCategory"
-            //"Microsoft.FeatureCategory"
-            //Microsoft.RequirementCategory
-            //Microsoft.BugCategory
-            /*
-                        if (workItemType == 'Epic') {
-                            return ['Feature']
-                        }
-                        if (workItemType == 'Feature') {
-                            return ['Product Backlog Item', 'User Story', 'Requirement', 'Bug']
-                        }
-                        if (workItemType == 'Product Backlog Item') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'User Story') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Requirement') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Bug') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Task') {
-                            return ['Task']
-                        }
-                        */
-            // WriteLog(workItemType + ' not supported.')
-            //  return null;
         }
 
         function ShowDialog(message) {
@@ -398,7 +370,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (nameA > nameB)
                 return 1;
             return 0; //default return value (no sorting)
-        };
+        }
 
         function WriteLog(msg) {
             console.log('1-Click Child-Links: ' + msg);
