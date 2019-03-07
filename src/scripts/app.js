@@ -209,7 +209,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                     getTemplates(childTypes)
                                         .then(function (response) {
                                             if (response.length == 0) {
-                                                ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                                ShowDialog('No ' + childTypes + ' templates found. Please add ' + childTypes + ' templates for the project team.');
                                                 return;
                                             }
                                             // Create children alphabetically.
@@ -247,6 +247,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             if (IsJsonString(JSON.stringify(applyWhen))) {
                 // Match work item type if present, otherwise assume the first record without a work item type applies.
+                // TODO
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
