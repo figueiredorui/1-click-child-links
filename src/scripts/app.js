@@ -246,6 +246,23 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             var applyWhen = extractJSON(taskTemplate.description)[0];
 
             if (IsJsonString(JSON.stringify(applyWhen))) {
+                // example JSON:
+                //
+                //   {
+                //      "applywhen": [
+                //        {
+                //          "System.WorkItemType": "Product Backlog Item",
+                //          "System.State": "Approved",
+                //          "System.Tags" : ["Blah", "ClickMe"]
+                //        },
+                //        {
+                //          "System.WorkItemType": "Custom Type",
+                //          "System.State": "Custom State",
+                //          "System.Title": "Repeatable item"
+                //        }
+                //      ]
+                //    }
+
                 // Match work item type if present, otherwise assume the first record without a work item type applies.
                 // TODO
             } else {
