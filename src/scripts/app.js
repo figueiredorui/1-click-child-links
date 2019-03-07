@@ -243,28 +243,41 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             // We need to maintain backward compatibility with the original filtering approach using square brackets.
             // If not empty, does the description have the old square bracket approach or new JSON?
-            var applyWhen = extractJSON(taskTemplate.description)[0];
+            var jsonFilters = extractJSON(taskTemplate.description)[0];
 
-            if (IsJsonString(JSON.stringify(applyWhen))) {
+            if (IsJsonString(JSON.stringify(jsonFilters))) {
                 // example JSON:
                 //
                 //   {
                 //      "applywhen": [
                 //        {
-                //          "System.WorkItemType": "Product Backlog Item",
                 //          "System.State": "Approved",
-                //          "System.Tags" : ["Blah", "ClickMe"]
+                //          "System.Tags" : ["Blah", "ClickMe"],
+                //          "System.WorkItemType": "Product Backlog Item"
                 //        },
                 //        {
-                //          "System.WorkItemType": "Custom Type",
+                //          "System.BoardColumn": "Testing",
+                //          "System.BoardLane": "Off radar",
                 //          "System.State": "Custom State",
-                //          "System.Title": "Repeatable item"
+                //          "System.Title": "Repeatable item",
+                //          "System.WorkItemType": "Custom Type"
                 //        }
                 //      ]
                 //    }
 
                 // Match work item type if present, otherwise assume the first record without a work item type applies.
-                // TODO
+                var applicableFilter = jsonFilters.applywhen.filter(
+                    function (el) {
+                        return (
+                            matchField('System.BoardColumn', currentWorkItem, el) &&
+                            matchField('System.BoardLane', currentWorkItem, el) &&
+                            matchField('System.State', currentWorkItem, el) &&
+                            matchField('System.Tags', currentWorkItem, el) &&
+                            matchField('System.Title', currentWorkItem, el) &&
+                            matchField('System.WorkItemType', currentWorkItem, el)
+                        );
+                    }
+                );
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -436,6 +449,30 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 JSON.parse(str);
             } catch (e) {
                 return false;
+            }
+            return true;
+        }
+
+        function matchField(fieldName, currentWorkItem, filterElement) {
+            return (
+                typeof (filterElement[fieldName]) === "undefined" ||
+                (!Array.isArray(filterElement[fieldName].toLowerCase()) && filterElement[fieldName].toLowerCase() === currentWorkItem[fieldName].toLowerCase()) ||
+                (Array.isArray(filterElement[fieldName].toLowerCase()) && arraysEqual(filterElement[fieldName], currentWorkItem[fieldName]))
+            );
+        }
+
+        function arraysEqual(a, b) {
+            if (a === b) return true;
+            if (a == null || b == null) return false;
+            if (a.length != b.length) return false;
+
+            // If you don't care about the order of the elements inside
+            // the array, you should sort both arrays here.
+            // Please note that calling sort on an array will modify that array.
+            // you might want to clone your array first.
+
+            for (var i = 0; i < a.length; ++i) {
+                if (a[i] !== b[i]) return false;
             }
             return true;
         }
