@@ -11,9 +11,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var requests = []
             var witClient = _WorkItemRestClient.getClient();
-            
+
             workItemTypes.forEach(function (workItemType) {
-                
+
                 var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
                 requests.push(request);
             }, this);
@@ -84,7 +84,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         var fieldValue = taskTemplate.fields[key];
                         //check for references to parent fields - {fieldName}
                         fieldValue = replaceReferenceToParentField(fieldValue, currentWorkItem);
-                        
+
                         workItem.push({ "op": "add", "path": "/fields/" + key, "value": fieldValue })
                     }
                 }
@@ -136,7 +136,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 rel: "System.LinkTypes.Hierarchy-Forward",
                                 url: response.url,
                             }]);
-                        //Save 
+                        //Save
                         service.beginSaveWorkItem(function (response) {
                             //WriteLog(" Saved");
                         }, function (error) {
@@ -229,7 +229,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         function createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings) {
             return function () {
                 return getTemplate(template.id).then(function (taskTemplate) {
-                    // Create child 
+                    // Create child
                     if (IsValidTemplateWIT(currentWorkItem, taskTemplate)) {
                         if (IsValidTemplateTitle(currentWorkItem, taskTemplate)) {
                             createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
@@ -284,6 +284,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         );
                     }
                 );
+
+                return applicableFilter.length > 0;
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -304,7 +306,11 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
-
+            var jsonFilters = extractJSON(taskTemplate.description)[0];
+            var isJSON = IsJsonString(JSON.stringify(jsonFilters));
+            if (isJSON) {
+                return true;
+            }
             var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
             var curTitle = currentWorkItem["System.Title"].match(/[^{\}]+(?=})/g);
             if (filters) {
