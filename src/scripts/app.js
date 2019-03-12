@@ -424,7 +424,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function WriteLog(msg) {
-            console.log('1-Click Child-Links: ' + msg);
+            console.info('1-Click Child-Links: ' + msg);
         }
 
         function extractJSON(str) {
