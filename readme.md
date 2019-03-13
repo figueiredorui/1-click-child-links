@@ -93,6 +93,10 @@ Basic `grunt` tasks are defined:
 
 Note: To avoid `tfx` prompting for your token when publishing, login in beforehand using `tfx login` and the service uri of ` https://marketplace.visualstudio.com`.
 
+## Contributors ##
+
+[//]: contributor-faces
+
 ## Credits ##
 
 Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple

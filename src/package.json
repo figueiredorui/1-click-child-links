@@ -12,5 +12,8 @@
   "name": "vsts-work-item-one-click-child-links",
   "private": true,
   "version": "0.10.0",
-  "scripts": {}
+  "scripts": {},
+  "dependencies": {
+    "contributor-faces": "^1.0.2"
+  }
 }

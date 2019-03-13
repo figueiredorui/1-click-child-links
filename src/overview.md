@@ -75,6 +75,9 @@ You should now have children associated with the open work item.
     <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Inherit-field-values-from-parent-work-item" target="_blank">Wiki</a>
     Copy field value from parent <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Copy-field-value-from-parent" target="_blank">Wiki</a>
     
+## Contributors ##
+
+[//]: contributor-faces
 
 ## Learn more ##
 
