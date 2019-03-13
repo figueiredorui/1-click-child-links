@@ -52,28 +52,25 @@ You should now have children associated with the open work item.
 
 ## Release notes ##
 
-* v0.8.0
+* v0.10.0
+  * Template applicability criteria can be defined using complex JSON objects in the template description.
 
-    Template sets can now be created on keywords in titles on top of Work Item Types
-    Inherit values from parent work item fields
-    <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Inherit-field-values-from-parent-work-item" target="_blank">Wiki</a>
-    Copy fields value from parent <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Copy-field-value-from-parent" target="_blank">Wiki</a>
+* v0.8.0
+  * Template sets can now be created on keywords in titles on top of Work Item Types
+  * Inherit values from parent work item fields (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Inherit-field-values-from-parent-work-item" target="_blank">wiki</a>)
+  * Copy field value from parent (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Copy-field-value-from-parent" target="_blank">wiki</a>)
 
 * v0.6.0
-
-    1-Click Child-Links option available when selecting multiple work items
+  * 1-Click Child-Links option available when selecting multiple work items
 
 * v0.5.0
-
-    1-Click Child-Links option available on Card and Backlog context menu.
+  * 1-Click Child-Links option available on Card and Backlog context menu.
 
 * v0.4.0
+  * Identifier to distinguish templates sets to be added in a single click (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">wiki</a>)
 
-    Identifier to distinguish templates sets to be added in a single click  <a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">Wiki</a>
-
-* v0.3.0 
-
-    Enforce correct order when adding child links to work item
+* v0.3.0
+  * Enforce correct order when adding child links to work item
 
 ## Contributors ##
 
@@ -86,4 +83,4 @@ This extension is an enhanced version of <a href="https://marketplace.visualstud
 
 The <a href="https://github.com/figueiredorui/1-click-child-links" target="_blank">source</a> for this extension is on GitHub. Take, fork, and extend.
 
-Let's discuss <a href="https://github.com/figueiredorui/1-click-child-links/issues" target="_blank">Issues and Improvements</a>
+Let's discuss <a href="https://github.com/figueiredorui/1-click-child-links/issues" target="_blank">issues and improvements</a>.
