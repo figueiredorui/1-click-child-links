@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1.0,
     "id": "vsts-work-item-one-click-child-links",
-    "version": "0.9.1",
+    "version": "0.10.0",
     "name": "1-Click Child-Links",
-    "description": "Add Child-Links from predefined templates with a single click..",
+    "description": "Add Child-Links from pre-defined templates with a single click.",
     "public": false,
     "publisher": "ruifig",
     "repository": {

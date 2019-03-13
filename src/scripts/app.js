@@ -11,9 +11,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var requests = []
             var witClient = _WorkItemRestClient.getClient();
-            
+
             workItemTypes.forEach(function (workItemType) {
-                
+
                 var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
                 requests.push(request);
             }, this);
@@ -84,7 +84,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         var fieldValue = taskTemplate.fields[key];
                         //check for references to parent fields - {fieldName}
                         fieldValue = replaceReferenceToParentField(fieldValue, currentWorkItem);
-                        
+
                         workItem.push({ "op": "add", "path": "/fields/" + key, "value": fieldValue })
                     }
                 }
@@ -136,7 +136,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 rel: "System.LinkTypes.Hierarchy-Forward",
                                 url: response.url,
                             }]);
-                        //Save 
+                        //Save
                         service.beginSaveWorkItem(function (response) {
                             //WriteLog(" Saved");
                         }, function (error) {
@@ -189,14 +189,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             var team = {
                 projectId: ctx.project.id,
                 teamId: ctx.team.id
-            }
+            };
 
             workClient.getTeamSettings(team)
                 .then(function (teamSettings) {
                     // Get the current values for a few of the common fields
                     witClient.getWorkItem(workItemId)
                         .then(function (value) {
-                            var currentWorkItem = value.fields
+                            var currentWorkItem = value.fields;
 
                             currentWorkItem['System.Id'] = workItemId;
 
@@ -209,57 +209,108 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                     getTemplates(childTypes)
                                         .then(function (response) {
                                             if (response.length == 0) {
-                                                ShowDialog('No ' + childTypes + ' Templates found. Please add ' + childTypes + ' templates to the Project Team.')
+                                                ShowDialog('No ' + childTypes + ' templates found. Please add ' + childTypes + ' templates for the project team.');
                                                 return;
                                             }
-                                            // created childs alphabetical 
+                                            // Create children alphabetically.
                                             var templates = response.sort(SortTemplates);
                                             var chain = Q.when();
                                             templates.forEach(function (template) {
-                                                chain = chain.then(createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings));
+                                                chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings));
                                             });
                                             return chain;
 
-                                        })
+                                        });
                                 });
                         })
                 })
         }
 
-        function createChildFromtemplate(witClient, service, currentWorkItem, template, teamSettings) {
+        function createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings) {
             return function () {
                 return getTemplate(template.id).then(function (taskTemplate) {
-                    // Create child 
+                    // Create child
                     if (IsValidTemplateWIT(currentWorkItem, taskTemplate)) {
                         if (IsValidTemplateTitle(currentWorkItem, taskTemplate)) {
                             createWorkItem(service, currentWorkItem, taskTemplate, teamSettings)
                         }
                     }
-                });;
+                });
             };
         }
 
         function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
-            var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
-            if (filters) {
-                var isValid = false;
-                for (var i = 0; i < filters.length; i++) {
-                    var found = filters[i].split(',').find(function (f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase() });
-                    if (found) {
-                        isValid = true;
-                        break;
-                    }
-                }
-                return isValid;
-            } else {
-                return true;
-            }
+            // We need to maintain backward compatibility with the original filtering approach using square brackets.
+            // If not empty, does the description have the old square bracket approach or new JSON?
+            var jsonFilters = extractJSON(taskTemplate.description)[0];
 
+            if (IsJsonString(JSON.stringify(jsonFilters))) {
+                // example JSON:
+                //
+                //   {
+                //      "applywhen": [
+                //        {
+                //          "System.State": "Approved",
+                //          "System.Tags" : ["Blah", "ClickMe"],
+                //          "System.WorkItemType": "Product Backlog Item"
+                //        },
+                //        {
+                //          "System.BoardColumn": "Testing",
+                //          "System.BoardLane": "Off radar",
+                //          "System.State": "Custom State",
+                //          "System.Title": "Repeatable item",
+                //          "System.WorkItemType": "Custom Type"
+                //        }
+                //      ]
+                //    }
+
+                // Match work item type if present, otherwise assume the first record without a work item type applies.
+                var hasWorkItemType = jsonFilters.applywhen.filter(
+                    function (el) {
+                        return (el['System.WorkItemType'] !== "undefined");
+                    }
+                );
+
+                var applicableFilter = jsonFilters.applywhen.filter(
+                    function (el) {
+                        return (
+                            matchField('System.BoardColumn', currentWorkItem, el) &&
+                            matchField('System.BoardLane', currentWorkItem, el) &&
+                            matchField('System.State', currentWorkItem, el) &&
+                            matchField('System.Tags', currentWorkItem, el) &&
+                            matchField('System.Title', currentWorkItem, el) &&
+                            (hasWorkItemType.length > 0 ? matchField('System.WorkItemType', currentWorkItem, el) : true)
+                        );
+                    }
+                );
+
+                return applicableFilter.length > 0;
+            } else {
+                var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
+
+                if (filters) {
+                    var isValid = false;
+                    for (var i = 0; i < filters.length; i++) {
+                        var found = filters[i].split(',').find(function (f) { return f.trim().toLowerCase() == currentWorkItem["System.WorkItemType"].toLowerCase() });
+                        if (found) {
+                            isValid = true;
+                            break;
+                        }
+                    }
+                    return isValid;
+                } else {
+                    return true;
+                }
+            }
         }
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
-
+            var jsonFilters = extractJSON(taskTemplate.description)[0];
+            var isJSON = IsJsonString(JSON.stringify(jsonFilters));
+            if (isJSON) {
+                return true;
+            }
             var filters = taskTemplate.description.match(/[^{\}]+(?=})/g);
             var curTitle = currentWorkItem["System.Title"].match(/[^{\}]+(?=})/g);
             if (filters) {
@@ -294,81 +345,53 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return witClient.getWorkItemTypeCategories(VSS.getWebContext().project.name)
                 .then(function (response) {
                     var categories = response;
-
                     var category = findWorkTypeCategory(categories, workItemType);
 
-                    if (category != null) {
+                    if (category !== null) {
+                        var requests = [];
+                        var workClient = workRestClient.getClient();
 
-                        if (category.referenceName == 'Microsoft.EpicCategory') {
+                        var team = {
+                            projectId: ctx.project.id,
+                            teamId: ctx.team.id
+                        };
+
+                        bugsBehavior = workClient.getTeamSettings(team).bugsBehavior; //Off, AsTasks, AsRequirements
+
+                        if (category.referenceName === 'Microsoft.EpicCategory') {
                             return witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.FeatureCategory')
                                 .then(function (response) {
                                     var category = response;
 
-                                    return category.workItemTypes.map(function (item) { return item.name });
+                                    return category.workItemTypes.map(function (item) { return item.name; });
                                 });
+                        } else if (category.referenceName === 'Microsoft.FeatureCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'));
+                            if (bugsBehavior === 'AsRequirements') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                        } else if (category.referenceName === 'Microsoft.RequirementCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
+                            if (bugsBehavior === 'AsTasks') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                        } else if (category.referenceName === 'Microsoft.BugCategory' && bugsBehavior === 'AsRequirements') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
+                        } else if (category.referenceName === 'Microsoft.TaskCategory') {
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
                         }
-                        if (category.referenceName == 'Microsoft.FeatureCategory') {
 
-                            var requests = [];
-                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'))
-                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory'))
+                        return Q.all(requests)
+                            .then(function (response) {
+                                var categories = response;
 
-                            return Q.all(requests)
-                                .then(function (response) {
-                                    var categories = response;
-
-                                    var result = [];
-                                    categories.forEach(function (category) {
-                                        category.workItemTypes.forEach(function (workItemType) {
-                                            result.push(workItemType.name);
-                                        });
+                                var result = [];
+                                categories.forEach(function (category) {
+                                    category.workItemTypes.forEach(function (workItemType) {
+                                        result.push(workItemType.name);
                                     });
-
-                                    return result;
                                 });
-                        }
-                        if (category.referenceName == 'Microsoft.RequirementCategory') {
-                            return ['Task']
-                        }
-                        if (category.referenceName == 'Microsoft.BugCategory') {
-                            return ['Task']
-                        }
-                        if (category.referenceName == 'Microsoft.TaskCategory') {
-                            return ['Task']
-                        }
 
+                                return result;
+                            });
                     }
                 });
-
-            //"Microsoft.EpicCategory"
-            //"Microsoft.FeatureCategory"
-            //Microsoft.RequirementCategory
-            //Microsoft.BugCategory
-            /*
-                        if (workItemType == 'Epic') {
-                            return ['Feature']
-                        }
-                        if (workItemType == 'Feature') {
-                            return ['Product Backlog Item', 'User Story', 'Requirement', 'Bug']
-                        }
-                        if (workItemType == 'Product Backlog Item') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'User Story') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Requirement') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Bug') {
-                            return ['Task']
-                        }
-                        if (workItemType == 'Task') {
-                            return ['Task']
-                        }
-                        */
-            // WriteLog(workItemType + ' not supported.')
-            //  return null;
         }
 
         function ShowDialog(message) {
@@ -398,10 +421,72 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (nameA > nameB)
                 return 1;
             return 0; //default return value (no sorting)
-        };
+        }
 
         function WriteLog(msg) {
             console.log('1-Click Child-Links: ' + msg);
+        }
+
+        function extractJSON(str) {
+            var firstOpen, firstClose, candidate;
+            firstOpen = str.indexOf('{', firstOpen + 1);
+            //console.log('firstopen: ', firstOpen);
+            if (firstOpen != -1) {
+                do {
+                    firstClose = str.lastIndexOf('}');
+                    //console.log('firstOpen: ' + firstOpen, 'firstClose: ' + firstClose);
+                    if (firstClose <= firstOpen) {
+                        return null;
+                    }
+                    do {
+                        candidate = str.substring(firstOpen, firstClose + 1);
+                        //console.log('candidate: ' + candidate);
+                        try {
+                            var res = JSON.parse(candidate);
+                            //console.log('...found');
+                            return [res, firstOpen, firstClose + 1];
+                        }
+                        catch (e) {
+                            console.log('...failed');
+                        }
+                        firstClose = str.substr(0, firstClose).lastIndexOf('}');
+                    } while (firstClose > firstOpen);
+                    firstOpen = str.indexOf('{', firstOpen + 1);
+                } while (firstOpen != -1);
+            } else { return ''; }
+        }
+
+        function IsJsonString(str) {
+            try {
+                JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+            return true;
+        }
+
+        function matchField(fieldName, currentWorkItem, filterElement) {
+            return (
+                typeof (filterElement[fieldName]) === "undefined" ||
+                (!Array.isArray(filterElement[fieldName].toLowerCase()) && filterElement[fieldName].toLowerCase() === currentWorkItem[fieldName].toLowerCase()) ||
+                (Array.isArray(filterElement[fieldName].toLowerCase()) && arraysEqual(filterElement[fieldName], currentWorkItem[fieldName]))
+            );
+        }
+
+        function arraysEqual(a, b) {
+            if (a === b) return true;
+            if (a == null || b == null) return false;
+            if (a.length != b.length) return false;
+
+            // If you don't care about the order of the elements inside
+            // the array, you should sort both arrays here.
+            // Please note that calling sort on an array will modify that array.
+            // you might want to clone your array first.
+
+            for (var i = 0; i < a.length; ++i) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
         }
 
         return {
