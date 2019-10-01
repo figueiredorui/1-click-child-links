@@ -470,8 +470,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         function matchField(fieldName, currentWorkItem, filterElement) {
             return (
                 typeof (filterElement[fieldName]) === "undefined" ||
-                (!Array.isArray(filterElement[fieldName].toLowerCase()) && filterElement[fieldName].toLowerCase() === currentWorkItem[fieldName].toLowerCase()) ||
-                (Array.isArray(filterElement[fieldName].toLowerCase()) && arraysEqual(filterElement[fieldName], currentWorkItem[fieldName]))
+                (!Array.isArray(filterElement[fieldName]) && filterElement[fieldName].toLowerCase() === currentWorkItem[fieldName].toLowerCase()) ||
+                (Array.isArray(filterElement[fieldName]) && arraysEqual(filterElement[fieldName], currentWorkItem[fieldName]))
             );
         }
 
