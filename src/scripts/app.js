@@ -244,6 +244,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             // We need to maintain backward compatibility with the original filtering approach using square brackets.
             // If not empty, does the description have the old square bracket approach or new JSON?
             var jsonFilters = extractJSON(taskTemplate.description)[0];
+            console.log(jsonFilters)
 
             if (IsJsonString(JSON.stringify(jsonFilters))) {
                 // example JSON:
@@ -265,6 +266,15 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 //      ]
                 //    }
 
+                var match = jsonFilters.applywhen.every(f=>{
+                    var keyNames = Object.keys(f)[0];
+                    console.log(keyNames)
+                    return matchField(keyNames, currentWorkItem, f);
+                })
+
+                return match;
+
+/*
                 // Match work item type if present, otherwise assume the first record without a work item type applies.
                 var hasWorkItemType = jsonFilters.applywhen.filter(
                     function (el) {
@@ -286,6 +296,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 );
 
                 return applicableFilter.length > 0;
+                */
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -303,6 +314,43 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     return true;
                 }
             }
+        }
+
+        function matchField(fieldName, currentWorkItem, filterElement) {
+            try {
+                if (currentWorkItem[fieldName] == null)
+                    return false;
+
+                if (typeof (filterElement[fieldName]) === "undefined")
+                    return false;
+
+                // convert it to array for easy compare
+                var filterElementValue = filterElement[fieldName];
+                if (!Array.isArray(filterElementValue))
+                    filterElementValue = new Array(filterElementValue);
+
+                var currentWorkItemValue = currentWorkItem[fieldName];
+                if (fieldName == "System.Tags"){
+                    currentWorkItemValue = currentWorkItem[fieldName].split("; ");
+                }
+                else{
+                    if (!Array.isArray(currentWorkItemValue))
+                        currentWorkItemValue = new Array(currentWorkItemValue);
+                }
+                
+
+                var match = filterElementValue.some(i => {
+                    return currentWorkItemValue.findIndex(c => i.toLowerCase() === c.toLowerCase()) >= 0;
+                })
+
+                return match;
+            }
+            catch (e) {
+                // declarações para manipular quaisquer exceções
+                console.log(e); // passa o objeto de exceção para o manipulador de erro
+                return false;
+            }
+
         }
 
         function IsValidTemplateTitle(currentWorkItem, taskTemplate) {
@@ -367,10 +415,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 });
                         } else if (category.referenceName === 'Microsoft.FeatureCategory') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'));
-                            if (bugsBehavior === 'AsRequirements') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                            if (bugsBehavior === 'AsRequirements') { 
+                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); 
+                            }
                         } else if (category.referenceName === 'Microsoft.RequirementCategory') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
-                            if (bugsBehavior === 'AsTasks') { requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); }
+                            if (bugsBehavior === 'AsTasks') { 
+                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); 
+                            }
                         } else if (category.referenceName === 'Microsoft.BugCategory' && bugsBehavior === 'AsRequirements') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
                         } else if (category.referenceName === 'Microsoft.TaskCategory') {
@@ -389,10 +441,11 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                         result.push(workItemType.name);
                                     });
                                 });
-
                                 return result;
                             });
-                    }
+                        
+                           
+                   }
                 });
         }
 
@@ -426,7 +479,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function WriteLog(msg) {
-            console.log('1-Click Child-Links: ' + msg);
+            console.log('1-Click Child-Links v1: ' + msg);
         }
 
         function extractJSON(str) {
@@ -449,7 +502,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             return [res, firstOpen, firstClose + 1];
                         }
                         catch (e) {
-                            console.log('...failed');
+                            console.log('...failed ' + e);
                         }
                         firstClose = str.substr(0, firstClose).lastIndexOf('}');
                     } while (firstClose > firstOpen);
@@ -467,13 +520,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return true;
         }
 
-        function matchField(fieldName, currentWorkItem, filterElement) {
-            return (
-                typeof (filterElement[fieldName]) === "undefined" ||
-                (!Array.isArray(filterElement[fieldName]) && filterElement[fieldName].toLowerCase() === currentWorkItem[fieldName].toLowerCase()) ||
-                (Array.isArray(filterElement[fieldName]) && arraysEqual(filterElement[fieldName], currentWorkItem[fieldName]))
-            );
-        }
+       
 
         function arraysEqual(a, b) {
             if (a === b) return true;

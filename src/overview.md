@@ -52,6 +52,9 @@ You should now have children associated with the open work item.
 
 ## Release notes ##
 
+* v0.11.0
+  * Fixed issue #50
+
 * v0.10.0
   * Template applicability criteria can be defined using complex JSON objects in the template description.
 
