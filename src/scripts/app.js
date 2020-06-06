@@ -420,6 +420,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             }
                         } else if (category.referenceName === 'Microsoft.RequirementCategory') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
+                            requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TestCaseCategory'));
                             if (bugsBehavior === 'AsTasks') { 
                                 requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); 
                             }
