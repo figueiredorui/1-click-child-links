@@ -140,9 +140,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                             }]);
                         //Save
                         service.beginSaveWorkItem(function (response) {
-                            //WriteLog(" Saved");
+                            // saved
                         }, function (error) {
-                            ShowDialog(" Error saving: " + response);
+                                ShowDialog(" Error saving: " + error);
+                                WriteError("createWorkItem " + error);
                         });
                     } else {
                         //save using RestClient
@@ -167,10 +168,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 });
                             }, function (error) {
                                     ShowDialog(" Error saving: " + error);
+                                    WriteError("createWorkItem " + error);
                             });
                     }
                 }, function (error) {
                         ShowDialog(" Error saving: " + error);
+                        WriteError("createWorkItem " + error);
                 });
         }
 
@@ -250,8 +253,6 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             // We need to maintain backward compatibility with the original filtering approach using square brackets.
             // If not empty, does the description have the old square bracket approach or new JSON?
             var jsonFilters = extractJSON(taskTemplate.description)[0];
-            console.log(jsonFilters)
-
             if (IsJsonString(JSON.stringify(jsonFilters))) {
                 // example JSON:
                 //
@@ -274,7 +275,6 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
                 var match = jsonFilters.applywhen.every(f=>{
                     var keyNames = Object.keys(f)[0];
-                    console.log(keyNames)
                     return matchField(keyNames, currentWorkItem, f);
                 })
 
@@ -352,8 +352,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 return match;
             }
             catch (e) {
-                // declarações para manipular quaisquer exceções
-                console.log(e); // passa o objeto de exceção para o manipulador de erro
+                WriteError('matchField ' + e);
                 return false;
             }
 
@@ -486,30 +485,34 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         }
 
         function WriteLog(msg) {
-            console.log('1-Click Child-Links v1: ' + msg);
+            console.log('1-Click Child-Links: ' + msg);
+        }
+
+        function WriteError(msg) {
+            console.error('1-Click Child-Links: ' + msg);
         }
 
         function extractJSON(str) {
             var firstOpen, firstClose, candidate;
             firstOpen = str.indexOf('{', firstOpen + 1);
-            //console.log('firstopen: ', firstOpen);
+            
             if (firstOpen != -1) {
                 do {
                     firstClose = str.lastIndexOf('}');
-                    //console.log('firstOpen: ' + firstOpen, 'firstClose: ' + firstClose);
+                    
                     if (firstClose <= firstOpen) {
                         return null;
                     }
                     do {
                         candidate = str.substring(firstOpen, firstClose + 1);
-                        //console.log('candidate: ' + candidate);
+                        
                         try {
                             var res = JSON.parse(candidate);
-                            //console.log('...found');
+                            
                             return [res, firstOpen, firstClose + 1];
                         }
                         catch (e) {
-                            console.log('...failed ' + e);
+                            WriteError('extractJSON ...failed ' + e);
                         }
                         firstClose = str.substr(0, firstClose).lastIndexOf('}');
                     } while (firstClose > firstOpen);
