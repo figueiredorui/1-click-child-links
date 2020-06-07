@@ -1,7 +1,7 @@
 {
-    "manifestVersion": 1.0,
+    "manifestVersion": 1.0,    
     "id": "vsts-work-item-one-click-child-links",
-    "version": "0.10.1",
+    "version": "0.11.1",
     "name": "1-Click Child-Links",
     "description": "Add Child-Links from pre-defined templates with a single click.",
     "public": false,
