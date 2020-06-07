@@ -130,7 +130,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             witClient.createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
                 .then(function (response) {
 
-                    
+
                     //Add relation
                     if (service != null) {
                         service.addWorkItemRelations([
@@ -142,8 +142,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         service.beginSaveWorkItem(function (response) {
                             // saved
                         }, function (error) {
-                                ShowDialog(" Error saving: " + error);
-                                WriteError("createWorkItem " + error);
+                            ShowDialog(" Error saving: " + error);
+                            WriteError("createWorkItem " + error);
                         });
                     } else {
                         //save using RestClient
@@ -163,17 +163,21 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         witClient.updateWorkItem(document, workItemId)
                             .then(function (response) {
                                 var a = response;
-                                VSS.getService(VSS.ServiceIds.Navigation).then(function (navigationService) {
-                                    navigationService.reload();
-                                });
+                                VSS.getService(VSS.ServiceIds.Navigation)
+                                    .then(function (navigationService) {
+                                        WriteLog('updateWorkItem')
+                                        setTimeout(function () {
+                                            navigationService.reload();
+                                        }, 1000);
+                                    });
                             }, function (error) {
-                                    ShowDialog(" Error saving: " + error);
-                                    WriteError("createWorkItem " + error);
+                                ShowDialog(" Error saving: " + error);
+                                WriteError("createWorkItem " + error);
                             });
                     }
                 }, function (error) {
-                        ShowDialog(" Error saving: " + error);
-                        WriteError("createWorkItem " + error);
+                    ShowDialog(" Error saving: " + error);
+                    WriteError("createWorkItem " + error);
                 });
         }
 
@@ -273,36 +277,36 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 //      ]
                 //    }
 
-                var match = jsonFilters.applywhen.every(f=>{
+                var match = jsonFilters.applywhen.every(f => {
                     var keyNames = Object.keys(f)[0];
                     return matchField(keyNames, currentWorkItem, f);
                 })
 
                 return match;
 
-/*
-                // Match work item type if present, otherwise assume the first record without a work item type applies.
-                var hasWorkItemType = jsonFilters.applywhen.filter(
-                    function (el) {
-                        return (el['System.WorkItemType'] !== "undefined");
-                    }
-                );
-
-                var applicableFilter = jsonFilters.applywhen.filter(
-                    function (el) {
-                        return (
-                            matchField('System.BoardColumn', currentWorkItem, el) &&
-                            matchField('System.BoardLane', currentWorkItem, el) &&
-                            matchField('System.State', currentWorkItem, el) &&
-                            matchField('System.Tags', currentWorkItem, el) &&
-                            matchField('System.Title', currentWorkItem, el) &&
-                            (hasWorkItemType.length > 0 ? matchField('System.WorkItemType', currentWorkItem, el) : true)
-                        );
-                    }
-                );
-
-                return applicableFilter.length > 0;
-                */
+                /*
+                                // Match work item type if present, otherwise assume the first record without a work item type applies.
+                                var hasWorkItemType = jsonFilters.applywhen.filter(
+                                    function (el) {
+                                        return (el['System.WorkItemType'] !== "undefined");
+                                    }
+                                );
+                
+                                var applicableFilter = jsonFilters.applywhen.filter(
+                                    function (el) {
+                                        return (
+                                            matchField('System.BoardColumn', currentWorkItem, el) &&
+                                            matchField('System.BoardLane', currentWorkItem, el) &&
+                                            matchField('System.State', currentWorkItem, el) &&
+                                            matchField('System.Tags', currentWorkItem, el) &&
+                                            matchField('System.Title', currentWorkItem, el) &&
+                                            (hasWorkItemType.length > 0 ? matchField('System.WorkItemType', currentWorkItem, el) : true)
+                                        );
+                                    }
+                                );
+                
+                                return applicableFilter.length > 0;
+                                */
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -336,14 +340,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     filterElementValue = new Array(filterElementValue);
 
                 var currentWorkItemValue = currentWorkItem[fieldName];
-                if (fieldName == "System.Tags"){
+                if (fieldName == "System.Tags") {
                     currentWorkItemValue = currentWorkItem[fieldName].split("; ");
                 }
-                else{
+                else {
                     if (!Array.isArray(currentWorkItemValue))
                         currentWorkItemValue = new Array(currentWorkItemValue);
                 }
-                
+
 
                 var match = filterElementValue.some(i => {
                     return currentWorkItemValue.findIndex(c => i.toLowerCase() === c.toLowerCase()) >= 0;
@@ -420,14 +424,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 });
                         } else if (category.referenceName === 'Microsoft.FeatureCategory') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.RequirementCategory'));
-                            if (bugsBehavior === 'AsRequirements') { 
-                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); 
+                            if (bugsBehavior === 'AsRequirements') {
+                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory'));
                             }
                         } else if (category.referenceName === 'Microsoft.RequirementCategory') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TestCaseCategory'));
-                            if (bugsBehavior === 'AsTasks') { 
-                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory')); 
+                            if (bugsBehavior === 'AsTasks') {
+                                requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.BugCategory'));
                             }
                         } else if (category.referenceName === 'Microsoft.BugCategory' && bugsBehavior === 'AsRequirements') {
                             requests.push(witClient.getWorkItemTypeCategory(VSS.getWebContext().project.name, 'Microsoft.TaskCategory'));
@@ -449,9 +453,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 });
                                 return result;
                             });
-                        
-                           
-                   }
+
+
+                    }
                 });
         }
 
@@ -495,20 +499,20 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         function extractJSON(str) {
             var firstOpen, firstClose, candidate;
             firstOpen = str.indexOf('{', firstOpen + 1);
-            
+
             if (firstOpen != -1) {
                 do {
                     firstClose = str.lastIndexOf('}');
-                    
+
                     if (firstClose <= firstOpen) {
                         return null;
                     }
                     do {
                         candidate = str.substring(firstOpen, firstClose + 1);
-                        
+
                         try {
                             var res = JSON.parse(candidate);
-                            
+
                             return [res, firstOpen, firstClose + 1];
                         }
                         catch (e) {
@@ -530,7 +534,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return true;
         }
 
-       
+
 
         function arraysEqual(a, b) {
             if (a === b) return true;
