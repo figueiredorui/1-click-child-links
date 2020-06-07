@@ -52,6 +52,15 @@ You should now have children associated with the open work item.
 
 ## Release notes ##
 
+* v0.11.0
+  * Fixed issue #50
+  * Fixed issue #48
+  * Fixed issue #46
+  * Fixed issue #45
+  * Fixed issue #41
+  * Fixed issue #37
+  * Enhancement issue #49
+
 * v0.10.0
   * Template applicability criteria can be defined using complex JSON objects in the template description.
 
@@ -98,3 +107,5 @@ Note: To avoid `tfx` prompting for your token when publishing, login in beforeha
 ## Credits ##
 
 Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple
+
+// "baseUri": "https://localhost:5501",
