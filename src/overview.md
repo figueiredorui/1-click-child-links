@@ -57,6 +57,8 @@ You should now have children associated with the open work item.
   * Fixed issue #48
   * Fixed issue #46
   * Fixed issue #45
+  * Fixed issue #41
+  * Fixed issue #37
   * Enhancement issue #49
 
 * v0.10.0

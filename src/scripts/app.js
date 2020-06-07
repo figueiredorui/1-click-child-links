@@ -129,6 +129,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             witClient.createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
                 .then(function (response) {
+
+                    
                     //Add relation
                     if (service != null) {
                         service.addWorkItemRelations([
@@ -163,8 +165,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 VSS.getService(VSS.ServiceIds.Navigation).then(function (navigationService) {
                                     navigationService.reload();
                                 });
+                            }, function (error) {
+                                    ShowDialog(" Error saving: " + error);
                             });
                     }
+                }, function (error) {
+                        ShowDialog(" Error saving: " + error);
                 });
         }
 
