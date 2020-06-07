@@ -1,12 +1,12 @@
 {
   "devDependencies": {
-    "grunt": "~1.0.1",
+    "grunt": "^1.0.4",
     "grunt-cli": "^1.2.0",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-copy": "~1.0.0",
     "grunt-exec": "~0.4.7",
-    "tfx-cli": "^0.3.26",
     "requirejs": "^2.2.0",
+    "tfx-cli": "^0.8.1",
     "vss-web-extension-sdk": "^1.104.0"
   },
   "name": "vsts-work-item-one-click-child-links",
