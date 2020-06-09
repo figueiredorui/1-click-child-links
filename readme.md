@@ -16,19 +16,12 @@ Complex: put a minified (single line) JSON string into the child template's desc
 
 ``` json
 {
-    "applywhen": [
+    "applywhen": 
     {
         "System.State": "Approved",
         "System.Tags" : ["Blah", "ClickMe"],
         "System.WorkItemType": "Product Backlog Item"
-    },
-    {
-        "System.BoardColumn": "Testing",
-        "System.BoardLane": "Off radar",
-        "System.State": "Custom State",
-        "System.Title": "Repeatable item",
-        "System.WorkItemType": "Custom Type"
-    }]
+    }
 }
 ```
 
@@ -51,6 +44,11 @@ You should now have children associated with the open work item.
 <img src="src/img/screen03.png" alt="Done"/>
 
 ## Release notes ##
+
+* v0.11.3
+  * Fixed issue #62
+  * Fixed issue #49
+
 
 * v0.11.0
   * Fixed issue #50
@@ -99,6 +97,17 @@ Basic `grunt` tasks are defined:
 
 Note: To avoid `tfx` prompting for your token when publishing, login in beforehand using `tfx login` and the service uri of ` https://marketplace.visualstudio.com`.
 
+### Debugging your extension ###
+In order to debug the extension using Visual Studio or Browser Developer Tools and speed up the development without redeploying extension each time you change source code, you need change manifest adding baseUri property:
+
+``` json
+{
+    ...
+    "baseUri": "https://localhost:5501",
+    ...
+}
+```
+
 ## Contributors ##
 
 <a href="https://github.com/jdshkolnik"><img src="https://avatars.githubusercontent.com/u/2047520?v=3" title="jdshkolnik" width="80" height="80"></a>
@@ -107,5 +116,3 @@ Note: To avoid `tfx` prompting for your token when publishing, login in beforeha
 ## Credits ##
 
 Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple
-
-// "baseUri": "https://localhost:5501",

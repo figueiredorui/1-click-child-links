@@ -16,19 +16,12 @@ Complex: put a minified (single line) JSON string into the child template's desc
 
 ``` json
 {
-    "applywhen": [
+    "applywhen": 
     {
         "System.State": "Approved",
         "System.Tags" : ["Blah", "ClickMe"],
         "System.WorkItemType": "Product Backlog Item"
-    },
-    {
-        "System.BoardColumn": "Testing",
-        "System.BoardLane": "Off radar",
-        "System.State": "Custom State",
-        "System.Title": "Repeatable item",
-        "System.WorkItemType": "Custom Type"
-    }]
+    }
 }
 ```
 
@@ -51,6 +44,10 @@ You should now have children associated with the open work item.
 ![Export](img/screen03.png)
 
 ## Release notes ##
+
+* v0.11.3
+  * Fixed issue #62
+  * Fixed issue #49
 
 * v0.11.0
   * Fixed issue #50
