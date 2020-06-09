@@ -102,9 +102,9 @@ In order to debug the extension using Visual Studio or Browser Developer Tools a
 
 ``` json
 {
-    ...
+ 
     "baseUri": "https://localhost:5501",
-    ...
+ 
 }
 ```
 
