@@ -261,52 +261,25 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 // example JSON:
                 //
                 //   {
-                //      "applywhen": [
+                //      "applywhen": 
                 //        {
                 //          "System.State": "Approved",
                 //          "System.Tags" : ["Blah", "ClickMe"],
                 //          "System.WorkItemType": "Product Backlog Item"
-                //        },
-                //        {
-                //          "System.BoardColumn": "Testing",
-                //          "System.BoardLane": "Off radar",
-                //          "System.State": "Custom State",
-                //          "System.Title": "Repeatable item",
-                //          "System.WorkItemType": "Custom Type"
                 //        }
-                //      ]
                 //    }
 
-                var match = jsonFilters.applywhen.every(f => {
-                    var keyNames = Object.keys(f)[0];
-                    return matchField(keyNames, currentWorkItem, f);
-                })
+                var filters = jsonFilters.applywhen;
+                if (Array.isArray(jsonFilters.applywhen))
+                    filters = jsonFilters.applywhen[0];
+
+                var match = Object.keys(filters).every(function (prop) {
+                    return matchField(prop, currentWorkItem, filters);
+                });
 
                 return match;
 
-                /*
-                                // Match work item type if present, otherwise assume the first record without a work item type applies.
-                                var hasWorkItemType = jsonFilters.applywhen.filter(
-                                    function (el) {
-                                        return (el['System.WorkItemType'] !== "undefined");
-                                    }
-                                );
-                
-                                var applicableFilter = jsonFilters.applywhen.filter(
-                                    function (el) {
-                                        return (
-                                            matchField('System.BoardColumn', currentWorkItem, el) &&
-                                            matchField('System.BoardLane', currentWorkItem, el) &&
-                                            matchField('System.State', currentWorkItem, el) &&
-                                            matchField('System.Tags', currentWorkItem, el) &&
-                                            matchField('System.Title', currentWorkItem, el) &&
-                                            (hasWorkItemType.length > 0 ? matchField('System.WorkItemType', currentWorkItem, el) : true)
-                                        );
-                                    }
-                                );
-                
-                                return applicableFilter.length > 0;
-                                */
+               
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -326,18 +299,18 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             }
         }
 
-        function matchField(fieldName, currentWorkItem, filterElement) {
+        function matchField(fieldName, currentWorkItem, filterObject) {
             try {
                 if (currentWorkItem[fieldName] == null)
                     return false;
 
-                if (typeof (filterElement[fieldName]) === "undefined")
+                if (typeof (filterObject[fieldName]) === "undefined")
                     return false;
 
                 // convert it to array for easy compare
-                var filterElementValue = filterElement[fieldName];
-                if (!Array.isArray(filterElementValue))
-                    filterElementValue = new Array(filterElementValue);
+                var filterValue = filterObject[fieldName];
+                if (!Array.isArray(filterValue))
+                    filterValue = new Array(filterValue);
 
                 var currentWorkItemValue = currentWorkItem[fieldName];
                 if (fieldName == "System.Tags") {
@@ -349,7 +322,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 }
 
 
-                var match = filterElementValue.some(i => {
+                var match = filterValue.some(i => {
                     return currentWorkItemValue.findIndex(c => i.toLowerCase() === c.toLowerCase()) >= 0;
                 })
 
