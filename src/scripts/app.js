@@ -142,7 +142,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                         service.beginSaveWorkItem(function (response) {
                             // saved
                         }, function (error) {
-                            ShowDialog(" Error saving: " + error);
+                            ShowDialog(" Error beginSaveWorkItem: " + error);
                             WriteError("createWorkItem " + error);
                         });
                     } else {
@@ -165,18 +165,18 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 var a = response;
                                 VSS.getService(VSS.ServiceIds.Navigation)
                                     .then(function (navigationService) {
-                                        WriteLog('updateWorkItem')
+                                        WriteTrace('updateWorkItem completed')
                                         setTimeout(function () {
                                             navigationService.reload();
                                         }, 1000);
                                     });
                             }, function (error) {
-                                ShowDialog(" Error saving: " + error);
+                                ShowDialog(" Error updateWorkItem: " + error);
                                 WriteError("createWorkItem " + error);
                             });
                     }
                 }, function (error) {
-                    ShowDialog(" Error saving: " + error);
+                    ShowDialog(" Error createWorkItem: " + error);
                     WriteError("createWorkItem " + error);
                 });
         }
@@ -254,6 +254,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
         function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
+            WriteTrace("template: '" + taskTemplate.name + "'");
             // We need to maintain backward compatibility with the original filtering approach using square brackets.
             // If not empty, does the description have the old square bracket approach or new JSON?
             var jsonFilters = extractJSON(taskTemplate.description)[0];
@@ -269,17 +270,22 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 //        }
                 //    }
 
+                WriteTrace("filter: '" + JSON.stringify(jsonFilters) + "'");
+
                 var filters = jsonFilters.applywhen;
                 if (Array.isArray(jsonFilters.applywhen))
                     filters = jsonFilters.applywhen[0];
 
                 var match = Object.keys(filters).every(function (prop) {
-                    return matchField(prop, currentWorkItem, filters);
+
+                    var matchfield = matchField(prop, currentWorkItem, filters);
+                    WriteTrace(" - filter['" + prop + "'] : '" + filters[prop] + "' - wit['" + prop + "'] : '" + currentWorkItem[prop] + "' equal ? " + matchfield);
+                    return matchfield
                 });
 
                 return match;
 
-               
+
             } else {
                 var filters = taskTemplate.description.match(/[^[\]]+(?=])/g);
 
@@ -310,7 +316,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 // convert it to array for easy compare
                 var filterValue = filterObject[fieldName];
                 if (!Array.isArray(filterValue))
-                    filterValue = new Array(filterValue);
+                    filterValue = new Array(String(filterValue));
 
                 var currentWorkItemValue = currentWorkItem[fieldName];
                 if (fieldName == "System.Tags") {
@@ -318,7 +324,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 }
                 else {
                     if (!Array.isArray(currentWorkItemValue))
-                        currentWorkItemValue = new Array(currentWorkItemValue);
+                        currentWorkItemValue = new Array(String(currentWorkItemValue));
                 }
 
 
@@ -377,7 +383,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     var categories = response;
                     var category = findWorkTypeCategory(categories, workItemType);
 
-                    if (category !== null) {
+                    if (category != null) {
                         var requests = [];
                         var workClient = workRestClient.getClient();
 
@@ -461,6 +467,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return 0; //default return value (no sorting)
         }
 
+        function WriteTrace(msg) {
+            console.log('1-Click Child-Links: ' + msg);
+        }
+
         function WriteLog(msg) {
             console.log('1-Click Child-Links: ' + msg);
         }
@@ -528,7 +538,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         return {
 
             create: function (context) {
-                WriteLog('init');
+                WriteLog('init v0.11.11');
 
                 ctx = VSS.getWebContext();
 
