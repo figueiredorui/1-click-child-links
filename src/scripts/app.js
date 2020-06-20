@@ -255,35 +255,46 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         function IsValidTemplateWIT(currentWorkItem, taskTemplate) {
 
             WriteTrace("template: '" + taskTemplate.name + "'");
-            // We need to maintain backward compatibility with the original filtering approach using square brackets.
+            
             // If not empty, does the description have the old square bracket approach or new JSON?
             var jsonFilters = extractJSON(taskTemplate.description)[0];
             if (IsJsonString(JSON.stringify(jsonFilters))) {
                 // example JSON:
                 //
                 //   {
-                //      "applywhen": 
+                //      "applywhen": [
+                //        {
+                //          "System.State": "Approved",
+                //          "System.Tags" : ["Blah", "ClickMe"],
+                //          "System.WorkItemType": "Product Backlog Item"
+                //        },
                 //        {
                 //          "System.State": "Approved",
                 //          "System.Tags" : ["Blah", "ClickMe"],
                 //          "System.WorkItemType": "Product Backlog Item"
                 //        }
+                //         ]
                 //    }
 
                 WriteTrace("filter: '" + JSON.stringify(jsonFilters) + "'");
 
-                var filters = jsonFilters.applywhen;
-                if (Array.isArray(jsonFilters.applywhen))
-                    filters = jsonFilters.applywhen[0];
+                var rules = jsonFilters.applywhen;
+                if (!Array.isArray(rules))
+                    rules = new Array(rules);
 
-                var match = Object.keys(filters).every(function (prop) {
+                var matchRule = rules.some(filters => {
 
-                    var matchfield = matchField(prop, currentWorkItem, filters);
-                    WriteTrace(" - filter['" + prop + "'] : '" + filters[prop] + "' - wit['" + prop + "'] : '" + currentWorkItem[prop] + "' equal ? " + matchfield);
-                    return matchfield
+                    var matchFilter = Object.keys(filters).every(function (prop) {
+
+                        var matchfield = matchField(prop, currentWorkItem, filters);
+                        WriteTrace(" - filter['" + prop + "'] : '" + filters[prop] + "' - wit['" + prop + "'] : '" + currentWorkItem[prop] + "' equal ? " + matchfield);
+                        return matchfield
+                    });
+
+                    return matchFilter;
                 });
 
-                return match;
+                return matchRule;
 
 
             } else {
@@ -538,7 +549,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         return {
 
             create: function (context) {
-                WriteLog('init v0.11.11');
+                WriteLog('init v0.12.0');
 
                 ctx = VSS.getWebContext();
 
