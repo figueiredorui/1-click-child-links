@@ -551,7 +551,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         return {
 
             create: function (context) {
-                WriteLog('init v0.12.0');
+                WriteLog('init v0.12.1');
 
                 ctx = VSS.getWebContext();
 
