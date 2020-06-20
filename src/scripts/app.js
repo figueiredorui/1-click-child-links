@@ -171,12 +171,12 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                         }, 1000);
                                     });
                             }, function (error) {
-                                ShowDialog(" Error updateWorkItem: " + error);
+                                    ShowDialog(" Error updateWorkItem: " + JSON.stringify(error));
                                 WriteError("createWorkItem " + error);
                             });
                     }
                 }, function (error) {
-                    ShowDialog(" Error createWorkItem: " + error);
+                        ShowDialog(" Error createWorkItem: " + JSON.stringify(error));
                     WriteError("createWorkItem " + error);
                 });
         }
@@ -457,6 +457,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 height: 200,
                 resizable: false,
             };
+
+
 
             VSS.getService(VSS.ServiceIds.Dialog).then(function (dialogSvc) {
 
