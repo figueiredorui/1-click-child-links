@@ -2,6 +2,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
     function (_WorkItemServices, _WorkItemRestClient, workRestClient, Q, Controls, StatusIndicator, Dialogs) {
 
         var ctx = null;
+        var tasksCount = 0;
 
         function getWorkItemFormService() {
             return _WorkItemServices.WorkItemFormService.getService();
@@ -165,10 +166,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                 var a = response;
                                 VSS.getService(VSS.ServiceIds.Navigation)
                                     .then(function (navigationService) {
-                                        WriteTrace('updateWorkItem completed')
+                                        WriteTrace('updateWorkItem completed');
                                         setTimeout(function () {
                                             navigationService.reload();
-                                        }, 1000);
+                                        },  getReloadTime(tasksCount));
                                     });
                             }, function (error) {
                                     ShowDialog(" Error updateWorkItem: " + JSON.stringify(error));
@@ -198,6 +199,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var witClient = _WorkItemRestClient.getClient();
             var workClient = workRestClient.getClient();
+
+            tasksCount++;
 
             var team = {
                 projectId: ctx.project.id,
@@ -546,6 +549,16 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 if (a[i] !== b[i]) return false;
             }
             return true;
+        }
+
+        function getReloadTime(tasksCount){
+            var second = 1000;
+
+            if(tasksCount === 1){
+                return second;
+            }
+
+            return Math.log2(tasksCount) * second;
         }
 
         return {
