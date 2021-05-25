@@ -63,6 +63,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                     var parentField = filters[i];
                     var parentValue = currentWorkItem[parentField];
 
+                    if(!parentValue){
+                        parentValue = '';
+                    }
+
                     fieldValue = fieldValue.replace('{' + parentField + '}', parentValue)
                 }
             }
